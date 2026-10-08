@@ -1,0 +1,34 @@
+# Node & NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Compilación y Salidas
+dist/
+build/
+out/
+.angular/
+
+# Variables de Entorno y Secretos
+.env
+!.env.example
+*.local
+
+# IDEs & Editores
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db

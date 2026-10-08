@@ -1,0 +1,44 @@
+<section class="impact-section">
+  <div class="impact-header">
+    <div class="tag">Métricas en Tiempo Real</div>
+    <h2>Impacto Ambiental Acumulado</h2>
+    <p>Visualiza en vivo la reducción de huella de carbono y residuos electrónicos rescatados de vertederos.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="impact-loading">
+      <div class="spinner"></div>
+      <span>Calculando indicadores ecológicos...</span>
+    </div>
+  } @else if (impact()) {
+    <div class="metrics-grid">
+      <div class="metric-card co2-card">
+        <div class="metric-icon">🌱</div>
+        <div class="metric-value">{{ impact()?.totalCo2AvoidedKg }} <span class="unit">kg</span></div>
+        <div class="metric-label">CO₂ Evitado</div>
+        <div class="metric-tangible">≈ {{ impact()?.tangibles?.treesEquivalent }} árboles absorbiendo CO₂/año</div>
+      </div>
+
+      <div class="metric-card weight-card">
+        <div class="metric-icon">⚖️</div>
+        <div class="metric-value">{{ impact()?.totalDivertedLandfillKg }} <span class="unit">kg</span></div>
+        <div class="metric-label">Desviados de Vertederos</div>
+        <div class="metric-tangible">Hardware rescatado y reutilizado</div>
+      </div>
+
+      <div class="metric-card parts-card">
+        <div class="metric-icon">💻</div>
+        <div class="metric-value">{{ impact()?.totalRescuedComponents }}</div>
+        <div class="metric-label">Piezas Catalogadas</div>
+        <div class="metric-tangible">{{ impact()?.activeAvailableComponents }} disponibles en catálogo</div>
+      </div>
+
+      <div class="metric-card car-card">
+        <div class="metric-icon">🚗</div>
+        <div class="metric-value">{{ impact()?.tangibles?.carKmEquivalent }} <span class="unit">km</span></div>
+        <div class="metric-label">Equivalencia Automóvil</div>
+        <div class="metric-tangible">Km de combustión no emitidos</div>
+      </div>
+    </div>
+  }
+</section>

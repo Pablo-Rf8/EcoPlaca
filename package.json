@@ -1,0 +1,29 @@
+{
+  "name": "ecoplaca-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo fullstack para EcoPlaca - Gestión circular y trazabilidad de RAEE",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend start",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install"
+  },
+  "keywords": [
+    "ecoplaca",
+    "monorepo",
+    "angular",
+    "express",
+    "typescript",
+    "raee",
+    "circular-economy"
+  ],
+  "author": "EcoPlaca Team",
+  "license": "MIT"
+}

@@ -1,0 +1,82 @@
+@baseUrl = http://localhost:5000/api
+@contentType = application/json
+
+### 1. Health Check
+GET {{baseUrl}}/health
+Accept: {{contentType}}
+
+### 2. Obtener resumen de impacto ambiental (en tiempo real)
+GET {{baseUrl}}/impact/summary
+Accept: {{contentType}}
+
+### 3. Listar todos los componentes de hardware catalogados
+GET {{baseUrl}}/components
+Accept: {{contentType}}
+
+### 4. Filtrar componentes disponibles para reparación o reuso
+GET {{baseUrl}}/components?status=AVAILABLE&condition=REPAIRABLE
+Accept: {{contentType}}
+
+### 5. Obtener detalle de un componente por ID
+GET {{baseUrl}}/components/1
+Accept: {{contentType}}
+
+### 6. Obtener trazabilidad e historial de un componente
+GET {{baseUrl}}/components/1/traceability
+Accept: {{contentType}}
+
+### 7. Registrar / Catalogar nueva pieza de hardware
+POST {{baseUrl}}/components
+Content-Type: {{contentType}}
+
+{
+  "title": "Tarjeta Madre Gigabyte B550 AORUS Elite",
+  "categoryId": 1,
+  "donorId": 2,
+  "brand": "Gigabyte",
+  "model": "B550 AORUS Elite AX",
+  "serialNumber": "SN-B550-77192",
+  "conditionState": "REPAIRABLE",
+  "weightKg": 1.15,
+  "location": "Taller Guadalajara - Mesa 2",
+  "specifications": {
+    "socket": "AM4",
+    "chipset": "AMD B550",
+    "ramSlots": 4,
+    "pcieSlots": 2
+  },
+  "notes": "Donado con problema de BIOS corrupta. Requiere flasheo con programador CH341A."
+}
+
+### 8. Listar reservas activas
+GET {{baseUrl}}/reservations
+Accept: {{contentType}}
+
+### 9. Crear una nueva reserva de componente
+POST {{baseUrl}}/reservations
+Content-Type: {{contentType}}
+
+{
+  "componentId": 1,
+  "requesterId": 3,
+  "intendedUse": "REFURBISHMENT",
+  "notes": "Solicitado para reparar y ensamblar PC de laboratorio estudiantil comunitario."
+}
+
+### 10. Actualizar estado de una reserva (Aprobar)
+PATCH {{baseUrl}}/reservations/1/status
+Content-Type: {{contentType}}
+
+{
+  "status": "APPROVED",
+  "notes": "Aprobada entrega en taller comunitario."
+}
+
+### 11. Autenticación - Login de demostración
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@ecoplaca.org",
+  "password": "ecoplaca2026"
+}
