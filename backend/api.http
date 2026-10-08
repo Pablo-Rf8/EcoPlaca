@@ -1,82 +1,86 @@
-@baseUrl = http://localhost:5000/api
+@baseUrl = http://localhost:3000/api
 @contentType = application/json
 
-### 1. Health Check
+### 1. Health Check (Verificación de estado)
 GET {{baseUrl}}/health
 Accept: {{contentType}}
 
-### 2. Obtener resumen de impacto ambiental (en tiempo real)
-GET {{baseUrl}}/impact/summary
-Accept: {{contentType}}
-
-### 3. Listar todos los componentes de hardware catalogados
-GET {{baseUrl}}/components
-Accept: {{contentType}}
-
-### 4. Filtrar componentes disponibles para reparación o reuso
-GET {{baseUrl}}/components?status=AVAILABLE&condition=REPAIRABLE
-Accept: {{contentType}}
-
-### 5. Obtener detalle de un componente por ID
-GET {{baseUrl}}/components/1
-Accept: {{contentType}}
-
-### 6. Obtener trazabilidad e historial de un componente
-GET {{baseUrl}}/components/1/traceability
-Accept: {{contentType}}
-
-### 7. Registrar / Catalogar nueva pieza de hardware
-POST {{baseUrl}}/components
-Content-Type: {{contentType}}
-
-{
-  "title": "Tarjeta Madre Gigabyte B550 AORUS Elite",
-  "categoryId": 1,
-  "donorId": 2,
-  "brand": "Gigabyte",
-  "model": "B550 AORUS Elite AX",
-  "serialNumber": "SN-B550-77192",
-  "conditionState": "REPAIRABLE",
-  "weightKg": 1.15,
-  "location": "Taller Guadalajara - Mesa 2",
-  "specifications": {
-    "socket": "AM4",
-    "chipset": "AMD B550",
-    "ramSlots": 4,
-    "pcieSlots": 2
-  },
-  "notes": "Donado con problema de BIOS corrupta. Requiere flasheo con programador CH341A."
-}
-
-### 8. Listar reservas activas
-GET {{baseUrl}}/reservations
-Accept: {{contentType}}
-
-### 9. Crear una nueva reserva de componente
-POST {{baseUrl}}/reservations
-Content-Type: {{contentType}}
-
-{
-  "componentId": 1,
-  "requesterId": 3,
-  "intendedUse": "REFURBISHMENT",
-  "notes": "Solicitado para reparar y ensamblar PC de laboratorio estudiantil comunitario."
-}
-
-### 10. Actualizar estado de una reserva (Aprobar)
-PATCH {{baseUrl}}/reservations/1/status
-Content-Type: {{contentType}}
-
-{
-  "status": "APPROVED",
-  "notes": "Aprobada entrega en taller comunitario."
-}
-
-### 11. Autenticación - Login de demostración
+### 2. Autenticación - Login de Administrador
+# @name loginAdmin
 POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
 {
   "email": "admin@ecoplaca.org",
   "password": "ecoplaca2026"
+}
+
+### Guardar token JWT recibido
+@authToken = {{loginAdmin.response.body.data.token}}
+
+### 3. Autenticación - Registro de nuevo usuario
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombreCompleto": "Mario Taller de Reparación",
+  "email": "mario.taller@ejemplo.com",
+  "password": "ecoplaca2026",
+  "rolId": 3,
+  "telefono": "+52 33 9988 1122",
+  "direccion": "Av. Vallarta 1500, Guadalajara"
+}
+
+### 4. Consultar Perfil con Token
+GET {{baseUrl}}/auth/perfil
+Authorization: Bearer {{authToken}}
+Accept: {{contentType}}
+
+### 5. Listar todos los dispositivos catalogados
+GET {{baseUrl}}/dispositivos
+Accept: {{contentType}}
+
+### 6. Filtrar dispositivos disponibles y en estado funcional reparable
+GET {{baseUrl}}/dispositivos?estado=DISPONIBLE&estadoFuncional=REPARABLE
+Accept: {{contentType}}
+
+### 7. Buscar dispositivos por texto libre
+GET {{baseUrl}}/dispositivos?busqueda=Ryzen
+Accept: {{contentType}}
+
+### 8. Obtener detalle de un dispositivo por ID
+GET {{baseUrl}}/dispositivos/1
+Accept: {{contentType}}
+
+### 9. Catalogar un nuevo dispositivo RAEE
+POST {{baseUrl}}/dispositivos
+Content-Type: {{contentType}}
+
+{
+  "titulo": "Placa Madre Gigabyte B550 AORUS Elite AX V2",
+  "categoriaId": 1,
+  "donanteId": 2,
+  "centroAcopioId": 1,
+  "marca": "Gigabyte",
+  "modelo": "B550 AORUS Elite AX V2",
+  "numeroSerie": "SN-GB550-99812",
+  "estadoFuncional": "REPARABLE",
+  "pesoKg": 1.10,
+  "especificaciones": {
+    "socket": "AM4",
+    "chipset": "AMD B550",
+    "formato": "ATX"
+  },
+  "notas": "Donada con BIOS corrupta. Requiere reprogramación de chip SPI Flash."
+}
+
+### 10. Actualizar estado de un dispositivo
+PATCH {{baseUrl}}/dispositivos/1/estado
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "estadoDisponibilidad": "RESERVADO",
+  "estadoFuncional": "REPARABLE",
+  "notas": "Apartado para taller de estudiantes de bachillerato técnico."
 }

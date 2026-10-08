@@ -1,56 +1,32 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
-import { envConfig } from './config/env.config';
-import { requestLogger } from './middleware/logger.middleware';
-import { notFoundHandler, errorHandler } from './middleware/error.middleware';
-import apiRouter from './routes';
+import { errorHandler } from './middleware/error.middleware';
+import indexRoutes from './routes/index.routes';
 
-export function createApp(): Application {
-  const app: Application = express();
+const app: Application = express();
 
-  // Configuración de CORS
-  app.use(cors({
-    origin: (origin, callback) => {
-      // Permitir solicitudes locales de Angular o sin origen (ej. curl, Postman, api.http)
-      if (!origin || origin === envConfig.corsOrigin || origin.startsWith('http://localhost:')) {
-        callback(null, true);
-      } else {
-        callback(null, true); // En desarrollo permitimos orígenes amigables
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-  }));
+// Middlewares globales
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-  // Parsers de contenido
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+// Endpoint de salud requerido: GET /api/health
+app.get('/api/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', app: 'EcoPlaca API' });
+});
 
-  // Middleware de logging de peticiones
-  app.use(requestLogger);
+// Montaje de rutas base bajo el prefijo /api
+app.use('/api', indexRoutes);
 
-  // Ruta raíz de bienvenida e información de la API
-  app.get('/', (req: Request, res: Response) => {
-    res.json({
-      name: 'EcoPlaca API',
-      description: 'Plataforma para la gestión circular y trazabilidad de RAEE',
-      version: '1.0.0',
-      status: 'active',
-      documentation: `${envConfig.apiPrefix}/health`
-    });
+// Manejo de rutas inexistentes (404)
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    error: `Ruta no encontrada: [${req.method}] ${req.originalUrl}`
   });
+});
 
-  // Montaje de rutas de la API bajo el prefijo configurado (/api)
-  app.use(envConfig.apiPrefix, apiRouter);
+// Middleware de manejo de errores
+app.use(errorHandler);
 
-  // Manejo de 404 (Rutas inexistentes)
-  app.use(notFoundHandler);
-
-  // Manejo centralizado de errores (500)
-  app.use(errorHandler);
-
-  return app;
-}
-
-export default createApp();
+export default app;

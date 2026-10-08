@@ -1,31 +1,42 @@
 import mysql from 'mysql2/promise';
-import { envConfig } from './env.config';
-import { logger } from '../utils/logger.util';
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Pool de conexiones MySQL
+// Asegurar carga de variables de entorno
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+const dbHost = process.env.DB_HOST || 'localhost';
+const dbPort = parseInt(process.env.DB_PORT || '3308', 10);
+const dbUser = process.env.DB_USER || 'root';
+const dbPassword = process.env.DB_PASSWORD || 'root';
+const dbName = process.env.DB_NAME || 'ecoplaca_db';
+
+// Pool de conexiones MySQL con promesas
 export const pool = mysql.createPool({
-  host: envConfig.db.host,
-  port: envConfig.db.port,
-  user: envConfig.db.user,
-  password: envConfig.db.password,
-  database: envConfig.db.database,
+  host: dbHost,
+  port: dbPort,
+  user: dbUser,
+  password: dbPassword,
+  database: dbName,
   waitForConnections: true,
-  connectionLimit: envConfig.db.connectionLimit,
+  connectionLimit: 10,
   queueLimit: 0,
 });
 
 /**
- * Verifica la conectividad con la base de datos MySQL
+ * Prueba la conectividad con la base de datos
  */
-export async function testDatabaseConnection(): Promise<boolean> {
+export async function testConnection(): Promise<boolean> {
   try {
     const connection = await pool.getConnection();
-    logger.info(`[Database] Conexión exitosa a MySQL en ${envConfig.db.host}:${envConfig.db.port}/${envConfig.db.database}`);
+    console.log(`[Database] Conexión establecida exitosamente con MySQL en ${dbHost}:${dbPort}/${dbName}`);
     connection.release();
     return true;
   } catch (error) {
     const err = error as Error;
-    logger.warn(`[Database] No se pudo conectar a MySQL (${err.message}). La API utilizará almacenamiento en memoria en modo desarrollo.`);
+    console.warn(`[Database] Advertencia de conexión a MySQL (${err.message}) en ${dbHost}:${dbPort}`);
     return false;
   }
 }
+
+export default pool;

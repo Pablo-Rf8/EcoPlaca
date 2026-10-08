@@ -1,0 +1,54 @@
+services:
+  # Servicio de Base de Datos MySQL para EcoPlaca
+  db:
+    image: mysql:8.0
+    container_name: ecoplaca-db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecoplaca_db
+      MYSQL_USER: ecoplaca_user
+      MYSQL_PASSWORD: ecoplaca_password
+    ports:
+      # Mapeo del puerto 3308 del host al 3306 del contenedor (evita colisiones con servicios locales en 3306)
+      - "${DB_PORT:-3308}:3306"
+    volumes:
+      # Carga automática del script SQL de inicialización al crear el contenedor
+      - ./DB/ecoplaca_DB.sql:/docker-entrypoint-initdb.d/01_ecoplaca_DB.sql:ro
+      # Persistencia de los datos en volumen nombrado
+      - ecoplaca_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecoplaca-network
+
+  # Administrador Web de Base de Datos (Opcional)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: ecoplaca-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8085:80"
+    networks:
+      - ecoplaca-network
+
+volumes:
+  ecoplaca_db_data:
+    name: ecoplaca_db_data
+
+networks:
+  ecoplaca-network:
+    name: ecoplaca-network
+    driver: bridge

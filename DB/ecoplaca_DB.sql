@@ -1,9 +1,12 @@
 -- =============================================================================
 -- EcoPlaca - Plataforma de Gestión Circular y Trazabilidad de RAEE
 -- Script de Base de Datos Relacional: ecoplaca_DB.sql
+-- Motor: InnoDB | Codificación: UTF-8 (utf8mb4_unicode_ci)
+-- Normalización: 3FN (Tercera Forma Normal)
 -- =============================================================================
 
-CREATE DATABASE IF NOT EXISTS `ecoplaca_db` 
+DROP DATABASE IF EXISTS `ecoplaca_db`;
+CREATE DATABASE `ecoplaca_db` 
   CHARACTER SET utf8mb4 
   COLLATE utf8mb4_unicode_ci;
 
@@ -11,173 +14,164 @@ USE `ecoplaca_db`;
 
 -- -----------------------------------------------------------------------------
 -- 1. Tabla: roles
--- Define los perfiles del ecosistema circular:
--- DONOR (Donante), WORKSHOP (Taller técnico), RECYCLER (Centro de reciclaje), ADMIN (Administrador)
+-- Define los perfiles dentro de la plataforma: ADMIN, DONOR, TECHNICIAN
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `roles` (
+CREATE TABLE `roles` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(50) NOT NULL UNIQUE,
-    `description` VARCHAR(255) NULL,
+    `nombre` VARCHAR(50) NOT NULL UNIQUE,
+    `descripcion` VARCHAR(255) NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
--- 2. Tabla: users
--- Usuarios registrados (donantes de hardware, talleres de reparación, centros de reciclaje)
+-- 2. Tabla: usuarios
+-- Registra a administradores, donantes y técnicos de talleres de reciclaje/reparación
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `usuarios` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `role_id` INT NOT NULL,
-    `full_name` VARCHAR(150) NOT NULL,
+    `rol_id` INT NOT NULL,
+    `nombre_completo` VARCHAR(150) NOT NULL,
     `email` VARCHAR(150) NOT NULL UNIQUE,
     `password_hash` VARCHAR(255) NOT NULL,
-    `phone` VARCHAR(30) NULL,
-    `organization_name` VARCHAR(150) NULL,
-    `address` VARCHAR(255) NULL,
-    `city` VARCHAR(100) NULL,
-    `is_active` BOOLEAN DEFAULT TRUE,
+    `telefono` VARCHAR(30) NULL,
+    `direccion` VARCHAR(255) NULL,
+    `activo` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_users_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT
+    CONSTRAINT `fk_usuarios_rol` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
--- 3. Tabla: categories
--- Categorías de residuos de aparatos eléctricos y electrónicos (RAEE)
--- Incluye factor de emisión promedio para cálculo de CO2 evitado
+-- 3. Tabla: categorias_raee
+-- Catálogo oficial de tipos de residuos de aparatos eléctricos y electrónicos
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `categories` (
+CREATE TABLE `categorias_raee` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(100) NOT NULL UNIQUE,
-    `code` VARCHAR(20) NOT NULL UNIQUE,
-    `description` TEXT NULL,
-    `carbon_factor_kg_per_kg` DECIMAL(8, 2) NOT NULL DEFAULT 25.00 COMMENT 'Factor de kg CO2eq ahorrado por cada kg de componente reutilizado',
+    `codigo` VARCHAR(20) NOT NULL UNIQUE,
+    `nombre` VARCHAR(100) NOT NULL UNIQUE,
+    `descripcion` TEXT NULL,
+    `factor_co2_kg` DECIMAL(8, 2) NOT NULL DEFAULT 25.00 COMMENT 'kg CO2eq ahorrados por cada kg reutilizado',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
--- 4. Tabla: components
--- Inventario de piezas de hardware rescatadas y catalogadas
+-- 4. Tabla: centros_acopio
+-- Almacenes, talleres técnicos y centros autorizados de recepción de hardware
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `components` (
+CREATE TABLE `centros_acopio` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `tracking_code` VARCHAR(50) NOT NULL UNIQUE COMMENT 'Identificador único de trazabilidad (e.g. RAEE-2026-001)',
-    `title` VARCHAR(200) NOT NULL,
-    `category_id` INT NOT NULL,
-    `donor_id` INT NOT NULL,
-    `assigned_workshop_id` INT NULL,
-    `brand` VARCHAR(100) NULL,
-    `model` VARCHAR(100) NULL,
-    `serial_number` VARCHAR(100) NULL,
-    `condition_state` ENUM('FUNCTIONAL', 'REPAIRABLE', 'SCRAP_RECYCLING') NOT NULL DEFAULT 'REPAIRABLE',
-    `status` ENUM('AVAILABLE', 'RESERVED', 'IN_REPAIR', 'REUSED', 'RECYCLED') NOT NULL DEFAULT 'AVAILABLE',
-    `weight_kg` DECIMAL(6, 2) NOT NULL DEFAULT 0.00 COMMENT 'Peso físico para métricas de desvío de vertedero',
-    `co2_saved_kg` DECIMAL(8, 2) NOT NULL DEFAULT 0.00 COMMENT 'Impacto ambiental calculado en CO2 evitado',
-    `location` VARCHAR(150) NULL COMMENT 'Ubicación física actual o depósito',
-    `specifications` JSON NULL COMMENT 'Metadatos técnicos específicos (chips, socket, capacidad, voltajes)',
-    `notes` TEXT NULL,
-    `image_url` VARCHAR(255) NULL,
+    `nombre` VARCHAR(150) NOT NULL,
+    `direccion` VARCHAR(255) NOT NULL,
+    `ciudad` VARCHAR(100) NOT NULL,
+    `telefono` VARCHAR(30) NULL,
+    `capacidad_kg` DECIMAL(10, 2) NOT NULL DEFAULT 5000.00,
+    `activo` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------------------------------
+-- 5. Tabla: centros_categorias (Relación M:N)
+-- Define qué categorías de RAEE está autorizado a procesar cada centro
+-- -----------------------------------------------------------------------------
+CREATE TABLE `centros_categorias` (
+    `centro_id` INT NOT NULL,
+    `categoria_id` INT NOT NULL,
+    PRIMARY KEY (`centro_id`, `categoria_id`),
+    CONSTRAINT `fk_cc_centro` FOREIGN KEY (`centro_id`) REFERENCES `centros_acopio` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_cc_categoria` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_raee` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------------------------------
+-- 6. Tabla: dispositivos
+-- Inventario de hardware catalogado y trazable
+-- -----------------------------------------------------------------------------
+CREATE TABLE `dispositivos` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `codigo_trazabilidad` VARCHAR(50) NOT NULL UNIQUE,
+    `titulo` VARCHAR(200) NOT NULL,
+    `categoria_id` INT NOT NULL,
+    `donante_id` INT NOT NULL,
+    `centro_acopio_id` INT NULL,
+    `marca` VARCHAR(100) NULL,
+    `modelo` VARCHAR(100) NULL,
+    `numero_serie` VARCHAR(100) NULL,
+    `estado_funcional` ENUM('OPERATIVO', 'REPARABLE', 'DESGUACE_RECICLAJE') NOT NULL DEFAULT 'REPARABLE',
+    `estado_disponibilidad` ENUM('DISPONIBLE', 'RESERVADO', 'ASIGNADO', 'RECICLADO') NOT NULL DEFAULT 'DISPONIBLE',
+    `peso_kg` DECIMAL(6, 2) NOT NULL DEFAULT 0.00,
+    `co2_evitado_kg` DECIMAL(8, 2) NOT NULL DEFAULT 0.00,
+    `especificaciones` JSON NULL,
+    `notas` TEXT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_components_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT,
-    CONSTRAINT `fk_components_donor` FOREIGN KEY (`donor_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
-    CONSTRAINT `fk_components_workshop` FOREIGN KEY (`assigned_workshop_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+    CONSTRAINT `fk_dispositivos_categoria` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_raee` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_dispositivos_donante` FOREIGN KEY (`donante_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_dispositivos_centro` FOREIGN KEY (`centro_acopio_id`) REFERENCES `centros_acopio` (`id`) ON DELETE SET NULL,
+    INDEX `idx_busqueda_estado` (`estado_disponibilidad`, `estado_funcional`),
+    INDEX `idx_categoria` (`categoria_id`)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
--- 5. Tabla: reservations
--- Solicitudes y reservas de piezas por parte de talleres o centros de reciclaje
+-- 7. Tabla: ordenes_transferencia
+-- Bitácora de traspaso de dispositivos hacia técnicos o entre centros
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `reservations` (
+CREATE TABLE `ordenes_transferencia` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `component_id` INT NOT NULL,
-    `requester_id` INT NOT NULL,
-    `status` ENUM('PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
-    `intended_use` ENUM('REFURBISHMENT', 'PARTS_HARVESTING', 'MATERIAL_RECYCLING') NOT NULL DEFAULT 'REFURBISHMENT',
-    `notes` TEXT NULL,
-    `requested_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `resolved_at` TIMESTAMP NULL,
-    CONSTRAINT `fk_reservations_component` FOREIGN KEY (`component_id`) REFERENCES `components` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_reservations_requester` FOREIGN KEY (`requester_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+    `dispositivo_id` INT NOT NULL,
+    `tecnico_id` INT NOT NULL,
+    `centro_origen_id` INT NOT NULL,
+    `centro_destino_id` INT NULL,
+    `estado` ENUM('PENDIENTE', 'EN_TRANSITO', 'RECIBIDO', 'CANCELADO') NOT NULL DEFAULT 'PENDIENTE',
+    `motivo` VARCHAR(255) NOT NULL,
+    `fecha_solicitud` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `fecha_completado` TIMESTAMP NULL,
+    CONSTRAINT `fk_ot_dispositivo` FOREIGN KEY (`dispositivo_id`) REFERENCES `dispositivos` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_ot_tecnico` FOREIGN KEY (`tecnico_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_ot_origen` FOREIGN KEY (`centro_origen_id`) REFERENCES `centros_acopio` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_ot_destino` FOREIGN KEY (`centro_destino_id`) REFERENCES `centros_acopio` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
-
--- -----------------------------------------------------------------------------
--- 6. Tabla: traceability_logs
--- Bitácora inmutable de trazabilidad de cada componente desde su ingreso
--- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `traceability_logs` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `component_id` INT NOT NULL,
-    `actor_id` INT NULL,
-    `action` ENUM('CATALOGED', 'DIAGNOSED', 'REPAIR_STARTED', 'REPAIRED', 'RESERVED', 'DELIVERED', 'SCRAPPED', 'RECYCLED') NOT NULL,
-    `details` TEXT NOT NULL,
-    `recorded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_traceability_component` FOREIGN KEY (`component_id`) REFERENCES `components` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_traceability_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB;
-
--- -----------------------------------------------------------------------------
--- 7. Vista: v_environmental_impact_summary
--- Mide en tiempo real el impacto ambiental acumulado de hardware rescatado
--- -----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW `v_environmental_impact_summary` AS
-SELECT 
-    COUNT(c.id) AS total_rescued_components,
-    COALESCE(SUM(c.weight_kg), 0.00) AS total_diverted_landfill_kg,
-    COALESCE(SUM(c.co2_saved_kg), 0.00) AS total_co2_avoided_kg,
-    COUNT(CASE WHEN c.status = 'AVAILABLE' THEN 1 END) AS active_available_components,
-    COUNT(CASE WHEN c.status = 'RESERVED' THEN 1 END) AS reserved_components,
-    COUNT(CASE WHEN c.status IN ('REUSED', 'RECYCLED') THEN 1 END) AS circularized_components
-FROM `components` c;
 
 -- =============================================================================
 -- DATOS INICIALES (SEED DATA)
 -- =============================================================================
 
--- Roles del sistema
-INSERT INTO `roles` (`id`, `name`, `description`) VALUES
-(1, 'ADMIN', 'Administrador general de la plataforma EcoPlaca'),
-(2, 'DONOR', 'Donante particular, institucional o corporativo de hardware en desuso'),
-(3, 'WORKSHOP', 'Taller técnico especializado en reacondicionamiento y reparación'),
-(4, 'RECYCLER', 'Centro certificado de tratamiento y reciclaje de materiales RAEE')
-ON DUPLICATE KEY UPDATE `description` = VALUES(`description`);
+-- Roles requeridos
+INSERT INTO `roles` (`id`, `nombre`, `descripcion`) VALUES
+(1, 'ADMIN', 'Administrador general del sistema EcoPlaca'),
+(2, 'DONOR', 'Donante particular, corporativo o institucional de hardware'),
+(3, 'TECHNICIAN', 'Técnico especialista de taller de reacondicionamiento');
 
--- Categorías iniciales de hardware con factores de huella de carbono estimada
-INSERT INTO `categories` (`id`, `name`, `code`, `description`, `carbon_factor_kg_per_kg`) VALUES
-(1, 'Placas Madre / Motherboards', 'CAT-MB', 'Placas base de computadoras de escritorio, servidores y portátiles', 35.50),
-(2, 'Fuentes de Poder / PSU', 'CAT-PSU', 'Fuentes de alimentación ATX, modulares y de servidores', 18.20),
-(3, 'Memorias RAM', 'CAT-RAM', 'Módulos DDR3, DDR4, DDR5 y SO-DIMM para reutilización', 65.00),
-(4, 'Unidades de Almacenamiento', 'CAT-STO', 'Discos duros mecánicos HDD y unidades de estado sólido SSD', 42.00),
-(5, 'Tarjetas de Video / GPU', 'CAT-GPU', 'Tarjetas gráficas dedicadas de estaciones de trabajo y consumo', 55.80),
-(6, 'Procesadores / CPU', 'CAT-CPU', 'Microprocesadores de varias generaciones listos para ensamble', 80.00),
-(7, 'Monitores y Pantallas', 'CAT-DISP', 'Paneles LCD/LED de monitores y laptops rescatadas', 22.40)
-ON DUPLICATE KEY UPDATE `carbon_factor_kg_per_kg` = VALUES(`carbon_factor_kg_per_kg`);
+-- Usuarios con hash BCrypt (contraseña de prueba: 'ecoplaca2026')
+-- Hash generado con bcrypt salt 10 rounds para 'ecoplaca2026': $2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G
+INSERT INTO `usuarios` (`id`, `rol_id`, `nombre_completo`, `email`, `password_hash`, `telefono`, `direccion`) VALUES
+(1, 1, 'Carlos Mendoza (Admin)', 'admin@ecoplaca.org', '$2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G', '+52 55 1122 3344', 'Av. Reforma 400, CDMX'),
+(2, 2, 'TecnoEmpresa Donaciones', 'contacto@tecnoempresa.mx', '$2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G', '+52 55 9988 7766', 'Parque Tecnológico 12, Monterrey'),
+(3, 3, 'Ing. Laura Valenzuela (Técnico)', 'laura.tecnico@ecoplaca.org', '$2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G', '+52 33 4455 6677', 'Laboratorio Re-Boot, Guadalajara');
 
--- Usuarios de demostración (Contraseña de prueba: 'ecoplaca2026')
-INSERT INTO `users` (`id`, `role_id`, `full_name`, `email`, `password_hash`, `phone`, `organization_name`, `address`, `city`) VALUES
-(1, 1, 'Administrador EcoPlaca', 'admin@ecoplaca.org', '$2b$10$7vN34bF.Z9x9aQyKjDqLpOSnIe9P2aH2r2D1j.8D8.4D2aA.12345', '+52 55 1234 5678', 'EcoPlaca Foundation', 'Av. Reforma 100', 'Ciudad de México'),
-(2, 2, 'TecnoEmpresa Soluciones', 'contacto@tecnoempresa.com', '$2b$10$7vN34bF.Z9x9aQyKjDqLpOSnIe9P2aH2r2D1j.8D8.4D2aA.12345', '+52 55 9876 5432', 'TecnoEmpresa S.A.', 'Parque Industrial Norte 45', 'Monterrey'),
-(3, 3, 'Taller Comunitario Re-Boot', 'contacto@taller-reboot.org', '$2b$10$7vN34bF.Z9x9aQyKjDqLpOSnIe9P2aH2r2D1j.8D8.4D2aA.12345', '+52 33 4455 6677', 'Re-Boot Hardware Lab', 'Calle Hidalgo 210', 'Guadalajara'),
-(4, 4, 'E-Waste Reciclaje Sustentable', 'operaciones@ewasterecicla.mx', '$2b$10$7vN34bF.Z9x9aQyKjDqLpOSnIe9P2aH2r2D1j.8D8.4D2aA.12345', '+52 55 7788 9900', 'E-Waste Solutions de México', 'Zona Industrial Sur 12', 'Puebla')
-ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
+-- 4 Categorías oficiales de RAEE
+INSERT INTO `categorias_raee` (`id`, `codigo`, `nombre`, `descripcion`, `factor_co2_kg`) VALUES
+(1, 'RAEE-MB', 'Tarjetas Madre y Circuitos PCB', 'Placas base de computadoras de escritorio, laptops y servidores', 35.50),
+(2, 'RAEE-PSU', 'Fuentes de Poder', 'Fuentes de alimentación ATX, modulares y de servidores', 18.20),
+(3, 'RAEE-RAM', 'Módulos de Memoria RAM', 'Módulos DDR3, DDR4 y DDR5 para reutilización técnica', 65.00),
+(4, 'RAEE-CPU', 'Microprocesadores', 'CPUs de arquitecturas x86 y ARM rescatados para ensamble', 80.00);
 
--- Componentes de hardware iniciales catalogados con trazabilidad e impacto calculado
-INSERT INTO `components` (`id`, `tracking_code`, `title`, `category_id`, `donor_id`, `assigned_workshop_id`, `brand`, `model`, `serial_number`, `condition_state`, `status`, `weight_kg`, `co2_saved_kg`, `location`, `specifications`, `notes`) VALUES
-(1, 'RAEE-2026-0001', 'Tarjeta Madre Asus Prime B450M-A', 1, 2, 3, 'ASUS', 'Prime B450M-A', 'AS-B450M-98124', 'REPAIRABLE', 'AVAILABLE', 0.85, 30.17, 'Almacén Central - Rack A1', '{"socket": "AM4", "form_factor": "Micro-ATX", "ram_slots": 4}', 'Probada con multímetro. Requiere cambio de condensador sólido en fase VRM.'),
-(2, 'RAEE-2026-0002', 'Fuente de Poder EVGA 600W 80 Plus', 2, 2, 3, 'EVGA', '600 W1', 'EV-600W-34211', 'FUNCTIONAL', 'AVAILABLE', 1.60, 29.12, 'Almacén Central - Rack B3', '{"wattage": "600W", "efficiency": "80 PLUS White", "cables": "Non-Modular"}', 'Completamente operativa y testeada con probador de fuentes de poder.'),
-(3, 'RAEE-2026-0003', 'Kit RAM Kingston Fury Beast 16GB (2x8GB) DDR4', 3, 2, NULL, 'Kingston', 'Fury Beast DDR4', 'KF-DDR4-16G-887', 'FUNCTIONAL', 'RESERVED', 0.12, 7.80, 'Taller Comunitario Re-Boot', '{"type": "DDR4", "speed": "3200MHz", "latency": "CL16"}', 'MemTest86 superado al 100% sin errores.'),
-(4, 'RAEE-2026-0004', 'Procesador AMD Ryzen 5 3600', 6, 2, NULL, 'AMD', 'Ryzen 5 3600', 'RYZ-3600-44910', 'FUNCTIONAL', 'AVAILABLE', 0.05, 4.00, 'Almacén Central - Caja Antiestática C2', '{"cores": 6, "threads": 12, "base_clock": "3.6GHz", "tdp": "65W"}', 'Pines intactos, probado en banco de diagnóstico con éxito.'),
-(5, 'RAEE-2026-0005', 'Lote de 3 Fuentes Dañadas para Extracción de Cobre y Bobinas', 2, 2, NULL, 'Generics', 'ATX-Various', 'LOT-GEN-009', 'SCRAP_RECYCLING', 'AVAILABLE', 3.80, 69.16, 'Área de Desarme y Reciclaje', '{"materials": ["Cobre", "Aluminio", "Chapa de Acero"]}', 'Listas para donación a centro de reciclaje certificado para recuperación de metales.')
-ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
+-- 2 Centros de Acopio
+INSERT INTO `centros_acopio` (`id`, `nombre`, `direccion`, `ciudad`, `telefono`, `capacidad_kg`) VALUES
+(1, 'Centro de Acopio Central - CDMX', 'Calzada Vallejo 1020', 'Ciudad de México', '+52 55 2345 6789', 10000.00),
+(2, 'Taller Técnico y Acopio Occidente', 'Av. Niños Héroes 450', 'Guadalajara', '+52 33 8765 4321', 4500.00);
 
--- Reservas de ejemplo
-INSERT INTO `reservations` (`id`, `component_id`, `requester_id`, `status`, `intended_use`, `notes`) VALUES
-(1, 3, 3, 'APPROVED', 'REFURBISHMENT', 'Requerido para equipar una computadora recuperada para la escuela técnica local.');
+-- Relación M:N: Qué categorías procesa cada centro
+INSERT INTO `centros_categorias` (`centro_id`, `categoria_id`) VALUES
+(1, 1), (1, 2), (1, 3), (1, 4),
+(2, 1), (2, 2), (2, 3);
 
--- Historial de trazabilidad inicial
-INSERT INTO `traceability_logs` (`component_id`, `actor_id`, `action`, `details`) VALUES
-(1, 2, 'CATALOGED', 'Pieza ingresada y registrada por TecnoEmpresa Soluciones.'),
-(1, 3, 'DIAGNOSED', 'Inspección técnica completada. Condensador dañado detectado, placa recuperable.'),
-(2, 2, 'CATALOGED', 'Fuente de poder donada por renovación de equipos de cómputo corporativo.'),
-(3, 2, 'CATALOGED', 'Módulos de memoria RAM donados.'),
-(3, 3, 'RESERVED', 'Reserva aprobada para ensamble escolar.');
+-- Dispositivos de prueba catalogados
+INSERT INTO `dispositivos` (`id`, `codigo_trazabilidad`, `titulo`, `categoria_id`, `donante_id`, `centro_acopio_id`, `marca`, `modelo`, `numero_serie`, `estado_funcional`, `estado_disponibilidad`, `peso_kg`, `co2_evitado_kg`, `especificaciones`, `notas`) VALUES
+(1, 'RAEE-2026-0001', 'Tarjeta Madre Asus Prime B450M-A II', 1, 2, 1, 'ASUS', 'Prime B450M-A II', 'AS-B450M-88192', 'REPARABLE', 'DISPONIBLE', 0.85, 30.17, '{"socket": "AM4", "ram_slots": 4, "chipset": "AMD B450"}', 'Requiere soldadura de puerto PCIe y diagnóstico de VRM.'),
+(2, 'RAEE-2026-0002', 'Fuente de Poder EVGA 600W 80+ White', 2, 2, 1, 'EVGA', '600 W1', 'EV-600W-11234', 'OPERATIVO', 'DISPONIBLE', 1.60, 29.12, '{"potencia": "600W", "certificacion": "80 PLUS", "cableado": "Estándar"}', 'Voltajes testeados con medidor digital. Líneas 12V y 5V estables.'),
+(3, 'RAEE-2026-0003', 'Kit Memoria RAM Kingston HyperX Fury 16GB DDR4', 3, 2, 2, 'Kingston', 'HyperX Fury', 'HX-16G-3200-99', 'OPERATIVO', 'RESERVADO', 0.12, 7.80, '{"tipo": "DDR4", "capacidad": "16GB (2x8GB)", "velocidad": "3200MHz"}', 'MemTest86 sin errores en 4 pases continuos.'),
+(4, 'RAEE-2026-0004', 'Procesador AMD Ryzen 5 3600 (6C/12T)', 4, 2, 2, 'AMD', 'Ryzen 5 3600', 'RYZ-3600-77610', 'OPERATIVO', 'ASIGNADO', 0.05, 4.00, '{"nucleos": 6, "hilos": 12, "frecuencia_base": "3.6GHz"}', 'Pines en excelente estado. Asignado a taller escolar.');
+
+-- Órdenes de transferencia de prueba
+INSERT INTO `ordenes_transferencia` (`id`, `dispositivo_id`, `tecnico_id`, `centro_origen_id`, `centro_destino_id`, `estado`, `motivo`, `fecha_solicitud`, `fecha_completado`) VALUES
+(1, 1, 3, 1, 2, 'EN_TRANSITO', 'Traspaso a laboratorio técnico para reparación de socket y VRM', '2026-02-20 10:00:00', NULL),
+(2, 4, 3, 2, 2, 'RECIBIDO', 'Asignación directa para ensamble de equipo de cómputo educativo', '2026-02-22 14:30:00', '2026-02-22 16:00:00');

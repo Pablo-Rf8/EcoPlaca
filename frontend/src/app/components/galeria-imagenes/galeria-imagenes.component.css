@@ -1,0 +1,223 @@
+.galeria-section {
+  padding: 1.5rem 0;
+}
+
+.galeria-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.galeria-header h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+}
+
+.galeria-header p {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.filtros-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filtros-container button {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filtros-container button:hover {
+  background-color: #f1f5f9;
+}
+
+.filtros-container button.activo {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.grid-dispositivos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.card-dispositivo {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.badge-codigo {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.badge-estado {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+}
+
+.badge-estado.DISPONIBLE {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-estado.RESERVADO {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.badge-estado.ASIGNADO {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
+.card-imagen-placeholder {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.icono-tipo {
+  font-size: 2rem;
+}
+
+.categoria-tag {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dispositivo-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.75rem 0;
+}
+
+.datos-tecnicos {
+  background-color: #f8fafc;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.dato-fila {
+  display: flex;
+  justify-content: space-between;
+}
+
+.dato-fila .etiqueta {
+  color: #64748b;
+}
+
+.dato-fila .valor {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.co2-fila .co2-valor {
+  color: #10b981;
+}
+
+.condicion-tag.OPERATIVO {
+  color: #059669;
+}
+
+.condicion-tag.REPARABLE {
+  color: #d97706;
+}
+
+.notas-texto {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+  margin: 0 0 1rem 0;
+}
+
+.card-footer {
+  margin-top: auto;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.centro-info {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.btn-solicitar {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 0.55rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-solicitar:hover:not(:disabled) {
+  background-color: #10b981;
+}
+
+.btn-solicitar:disabled {
+  background-color: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.cargando-box {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+}

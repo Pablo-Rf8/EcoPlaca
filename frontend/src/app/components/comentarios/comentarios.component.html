@@ -1,0 +1,49 @@
+<section class="comentarios-section">
+  <div class="comentarios-header">
+    <h2>Bitácora de Comentarios y Notas Técnicas</h2>
+    <p>Historial de retroalimentación, notas de recepción y diagnósticos de dispositivos RAEE.</p>
+  </div>
+
+  <div class="nuevo-comentario-card">
+    <h3>Registrar Nota Técnica</h3>
+    <div class="formulario-comentario">
+      <div class="campo-grupo">
+        <label for="dispositivoCodigo">Código de Dispositivo:</label>
+        <input 
+          id="dispositivoCodigo" 
+          type="text" 
+          [(ngModel)]="codigoDispositivo" 
+          placeholder="Ej. RAEE-2026-0001" 
+        />
+      </div>
+      <div class="campo-grupo">
+        <label for="comentarioTexto">Observación / Diagnóstico:</label>
+        <textarea 
+          id="comentarioTexto" 
+          rows="3" 
+          [(ngModel)]="nuevoComentario" 
+          placeholder="Describe el estado de la pieza o detalles de entrega..."
+        ></textarea>
+      </div>
+      <button class="btn-publicar" (click)="agregarComentario()">Publicar Nota</button>
+    </div>
+  </div>
+
+  <div class="lista-comentarios">
+    @for (c of comentarios(); track c.id) {
+      <div class="comentario-item">
+        <div class="comentario-top">
+          <div class="autor-info">
+            <span class="autor-nombre">{{ c.autor }}</span>
+            <span class="autor-rol">{{ c.rol }}</span>
+          </div>
+          <div class="dispositivo-tag">
+            <span>{{ c.dispositivoCodigo }}</span>
+          </div>
+        </div>
+        <p class="comentario-contenido">{{ c.contenido }}</p>
+        <span class="comentario-fecha">{{ c.fecha }}</span>
+      </div>
+    }
+  </div>
+</section>

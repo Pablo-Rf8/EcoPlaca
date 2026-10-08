@@ -1,51 +1,46 @@
 import { Request, Response, NextFunction } from 'express';
-import { sendError } from '../utils/response.util';
-import { UserRole } from '../models/user.model';
+import jwt from 'jsonwebtoken';
 
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    role: UserRole;
-  };
+export interface TokenPayload {
+  id: number;
+  email: string;
+  rolId: number;
+  nombre: string;
+}
+
+export interface AuthRequest extends Request {
+  usuario?: TokenPayload;
 }
 
 /**
- * Middleware para validar autorización de solicitudes
+ * Middleware para validar tokens JWT en cabecera Authorization: Bearer <token>
  */
-export function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    // Si no hay token en modo desarrollo, permitimos continuar como usuario demo o retornamos 401 según el endpoint
-    sendError(res, 'Acceso no autorizado: Token de autenticación requerido', 401);
+    res.status(401).json({
+      success: false,
+      error: 'Acceso denegado: Token de autenticación no proporcionado',
+      timestamp: new Date().toISOString()
+    });
     return;
   }
 
-  try {
-    // En un entorno de producción se decodifica y verifica con jsonwebtoken
-    // Para simplificar la inicialización, simulamos verificación de token
-    req.user = {
-      id: 1,
-      email: 'admin@ecoplaca.org',
-      role: 'ADMIN'
-    };
-    next();
-  } catch {
-    sendError(res, 'Token inválido o expirado', 403);
-  }
-}
+  const secret = process.env.JWT_SECRET || 'ecoplaca_default_secret_key_2026';
 
-/**
- * Middleware para restringir acceso por rol del ecosistema
- */
-export function authorizeRoles(...roles: UserRole[]) {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      sendError(res, 'Permisos insuficientes para realizar esta operación', 403);
+  jwt.verify(token, secret, (err, decoded) => {
+    if (err) {
+      res.status(403).json({
+        success: false,
+        error: 'Token inválido o expirado',
+        timestamp: new Date().toISOString()
+      });
       return;
     }
+
+    req.usuario = decoded as TokenPayload;
     next();
-  };
+  });
 }

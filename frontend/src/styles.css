@@ -1,4 +1,4 @@
-/* EcoPlaca Global Styles */
+/* EcoPlaca Global CSS */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -7,7 +7,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #1e293b;
   background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;

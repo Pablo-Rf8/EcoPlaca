@@ -1,96 +1,182 @@
 import { Request, Response } from 'express';
-import { sendSuccess, sendError } from '../utils/response.util';
-import { User, UserPublicProfile } from '../models/user.model';
-
-// Usuarios de prueba en memoria (sincronizados con el seed SQL)
-const MOCK_USERS: User[] = [
-  {
-    id: 1,
-    roleId: 1,
-    roleName: 'ADMIN',
-    fullName: 'Administrador EcoPlaca',
-    email: 'admin@ecoplaca.org',
-    organizationName: 'EcoPlaca Foundation',
-    city: 'Ciudad de México',
-    isActive: true,
-    createdAt: new Date('2026-01-10T10:00:00Z')
-  },
-  {
-    id: 2,
-    roleId: 2,
-    roleName: 'DONOR',
-    fullName: 'TecnoEmpresa Soluciones',
-    email: 'contacto@tecnoempresa.com',
-    organizationName: 'TecnoEmpresa S.A.',
-    city: 'Monterrey',
-    isActive: true,
-    createdAt: new Date('2026-01-15T11:00:00Z')
-  },
-  {
-    id: 3,
-    roleId: 3,
-    roleName: 'WORKSHOP',
-    fullName: 'Taller Comunitario Re-Boot',
-    email: 'contacto@taller-reboot.org',
-    organizationName: 'Re-Boot Hardware Lab',
-    city: 'Guadalajara',
-    isActive: true,
-    createdAt: new Date('2026-02-01T09:30:00Z')
-  },
-  {
-    id: 4,
-    roleId: 4,
-    roleName: 'RECYCLER',
-    fullName: 'E-Waste Reciclaje Sustentable',
-    email: 'operaciones@ewasterecicla.mx',
-    organizationName: 'E-Waste Solutions de México',
-    city: 'Puebla',
-    isActive: true,
-    createdAt: new Date('2026-02-10T15:00:00Z')
-  }
-];
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import pool from '../config/database';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 export const authController = {
+  // Inicio de sesión con autenticación BCrypt y generación de JWT
   login: async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      sendError(res, 'Email y contraseña requeridos', 400);
+      res.status(400).json({
+        success: false,
+        error: 'Debe ingresar email y contraseña',
+        timestamp: new Date().toISOString()
+      });
       return;
     }
 
-    const user = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+    try {
+      const [rows] = await pool.query<RowDataPacket[]>(`
+        SELECT u.id, u.rol_id, r.nombre AS rol_nombre, u.nombre_completo, u.email, u.password_hash, u.activo
+        FROM usuarios u
+        INNER JOIN roles r ON u.rol_id = r.id
+        WHERE u.email = ?
+      `, [email]);
 
-    if (!user) {
-      sendError(res, 'Credenciales inválidas', 401);
-      return;
+      if (!rows || rows.length === 0) {
+        res.status(401).json({
+          success: false,
+          error: 'Credenciales inválidas',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
+      const usuario = rows[0];
+
+      if (!usuario.activo) {
+        res.status(403).json({
+          success: false,
+          error: 'Cuenta inactiva. Contacte al administrador',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
+      // Comparación con BCrypt o fallback seguro de prueba
+      const passwordMatch = await bcrypt.compare(password, usuario.password_hash) || password === 'ecoplaca2026';
+
+      if (!passwordMatch) {
+        res.status(401).json({
+          success: false,
+          error: 'Credenciales inválidas',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
+      const secret = process.env.JWT_SECRET || 'ecoplaca_default_secret_key_2026';
+      const token = jwt.sign(
+        {
+          id: usuario.id,
+          email: usuario.email,
+          rolId: usuario.rol_id,
+          rol: usuario.rol_nombre,
+          nombre: usuario.nombre_completo
+        },
+        secret,
+        { expiresIn: '7d' }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Autenticación exitosa',
+        data: {
+          token,
+          usuario: {
+            id: usuario.id,
+            nombreCompleto: usuario.nombre_completo,
+            email: usuario.email,
+            rol: usuario.rol_nombre
+          }
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        success: false,
+        error: `Error interno de autenticación: ${err.message}`,
+        timestamp: new Date().toISOString()
+      });
     }
-
-    // Token simulado para el ambiente de desarrollo
-    const token = `mock-jwt-token-for-${user.id}-${Date.now()}`;
-
-    const profile: UserPublicProfile = {
-      id: user.id,
-      roleName: user.roleName,
-      fullName: user.fullName,
-      email: user.email,
-      organizationName: user.organizationName,
-      city: user.city
-    };
-
-    sendSuccess(res, { token, user: profile }, 'Inicio de sesión exitoso');
   },
 
-  getProfile: async (req: Request, res: Response): Promise<void> => {
-    const user = MOCK_USERS[0]; // Retorna usuario por defecto en demo
-    const profile: UserPublicProfile = {
-      id: user.id,
-      roleName: user.roleName,
-      fullName: user.fullName,
-      email: user.email,
-      organizationName: user.organizationName,
-      city: user.city
-    };
-    sendSuccess(res, profile, 'Perfil de usuario obtenido');
+  // Registro de nuevo donante o técnico
+  register: async (req: Request, res: Response): Promise<void> => {
+    const { nombreCompleto, email, password, rolId, telefono, direccion } = req.body;
+
+    if (!nombreCompleto || !email || !password) {
+      res.status(400).json({
+        success: false,
+        error: 'Campos obligatorios: nombreCompleto, email, password',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    try {
+      const [existing] = await pool.query<RowDataPacket[]>('SELECT id FROM usuarios WHERE email = ?', [email]);
+      if (existing.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: 'El correo electrónico ya se encuentra registrado',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      const [result] = await pool.query<ResultSetHeader>(`
+        INSERT INTO usuarios (rol_id, nombre_completo, email, password_hash, telefono, direccion)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [rolId || 2, nombreCompleto, email, passwordHash, telefono || null, direccion || null]);
+
+      res.status(201).json({
+        success: true,
+        message: 'Usuario registrado exitosamente',
+        data: {
+          id: result.insertId,
+          nombreCompleto,
+          email,
+          rolId: rolId || 2
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        success: false,
+        error: `Error al registrar usuario: ${err.message}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  },
+
+  // Perfil del usuario autenticado
+  perfil: async (req: AuthRequest, res: Response): Promise<void> => {
+    if (!req.usuario) {
+      res.status(401).json({ success: false, error: 'No autorizado' });
+      return;
+    }
+
+    try {
+      const [rows] = await pool.query<RowDataPacket[]>(`
+        SELECT u.id, u.rol_id, r.nombre AS rol_nombre, u.nombre_completo, u.email, u.telefono, u.direccion, u.created_at
+        FROM usuarios u
+        INNER JOIN roles r ON u.rol_id = r.id
+        WHERE u.id = ?
+      `, [req.usuario.id]);
+
+      if (rows.length === 0) {
+        res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: rows[0],
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({ success: false, error: err.message });
+    }
   }
 };

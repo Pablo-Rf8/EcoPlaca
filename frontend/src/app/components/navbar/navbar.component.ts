@@ -7,11 +7,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss']
+  styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent {
   isMenuOpen = signal<boolean>(false);
-  activeRole = signal<string>('Taller Técnico / Re-Boot');
+  usuarioActivo = signal<string>('Taller Técnico Re-Boot');
 
   toggleMenu(): void {
     this.isMenuOpen.update(val => !val);

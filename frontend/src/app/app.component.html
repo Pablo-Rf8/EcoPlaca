@@ -1,73 +1,7 @@
 <div class="eco-app-layout">
-  <!-- Barra de Navegación Principal -->
   <app-navbar></app-navbar>
 
   <main class="main-content">
-    <!-- Banner de notificación temporal -->
-    <div class="notification-banner" *ngIf="reservationMessage()">
-      <span class="icon">✅</span>
-      <span>{{ reservationMessage() }}</span>
-    </div>
-
-    <!-- Módulo de Impacto Ambiental en Vivo -->
-    <app-impact-summary></app-impact-summary>
-
-    <!-- Sección de Catálogo de Hardware RAEE -->
-    <section class="catalog-section">
-      <div class="catalog-container">
-        <div class="catalog-header">
-          <div>
-            <h2>Catálogo de Piezas Rescatadas</h2>
-            <p>Componentes listos para reacondicionamiento, donación a talleres o recuperación de materiales.</p>
-          </div>
-
-          <!-- Filtros rápidos por estado de condición -->
-          <div class="filters-bar">
-            <button 
-              [class.active]="selectedFilter() === 'ALL'" 
-              (click)="filterBy('ALL')">
-              Todos
-            </button>
-            <button 
-              [class.active]="selectedFilter() === 'FUNCTIONAL'" 
-              (click)="filterBy('FUNCTIONAL')">
-              100% Funcional
-            </button>
-            <button 
-              [class.active]="selectedFilter() === 'REPAIRABLE'" 
-              (click)="filterBy('REPAIRABLE')">
-              Reparable
-            </button>
-            <button 
-              [class.active]="selectedFilter() === 'SCRAP_RECYCLING'" 
-              (click)="filterBy('SCRAP_RECYCLING')">
-              Reciclaje Material
-            </button>
-          </div>
-        </div>
-
-        @if (loading()) {
-          <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Cargando piezas del ecosistema circular...</p>
-          </div>
-        } @else {
-          <div class="components-grid">
-            @for (item of components(); track item.id) {
-              <app-component-card 
-                [item]="item" 
-                (reserve)="handleReservation($event)">
-              </app-component-card>
-            }
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- Outlet para rutas adicionales -->
     <router-outlet></router-outlet>
   </main>
-
-  <!-- Pie de Página -->
-  <app-footer></app-footer>
 </div>
