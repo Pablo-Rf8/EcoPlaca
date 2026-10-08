@@ -8,9 +8,10 @@ import { AuthRequest } from '../middleware/auth.middleware';
 export const authController = {
   // Inicio de sesión con autenticación BCrypt y generación de JWT
   login: async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body;
+    const { email: rawEmail, password } = req.body ?? {};
+    const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : rawEmail;
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       res.status(400).json({
         success: false,
         error: 'Debe ingresar email y contraseña',
@@ -47,8 +48,8 @@ export const authController = {
         return;
       }
 
-      // Comparación con BCrypt o fallback seguro de prueba
-      const passwordMatch = await bcrypt.compare(password, usuario.password_hash) || password === 'ecoplaca2026';
+      // Comparación exclusiva con el hash BCrypt almacenado
+      const passwordMatch = await bcrypt.compare(password, usuario.password_hash);
 
       if (!passwordMatch) {
         res.status(401).json({
@@ -59,7 +60,8 @@ export const authController = {
         return;
       }
 
-      const secret = process.env.JWT_SECRET || 'ecoplaca_default_secret_key_2026';
+      const secret: string | undefined = process.env.JWT_SECRET;
+      if (!secret) throw new Error('JWT_SECRET no está configurado');
       const token = jwt.sign(
         {
           id: usuario.id,
@@ -98,12 +100,19 @@ export const authController = {
 
   // Registro de nuevo donante o técnico
   register: async (req: Request, res: Response): Promise<void> => {
-    const { nombreCompleto, email, password, rolId, telefono, direccion } = req.body;
+    const { nombreCompleto: rawName, email: rawEmail, password, rolId, telefono, direccion } = req.body ?? {};
+    const nombreCompleto = typeof rawName === 'string' ? rawName.trim() : rawName;
+    const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : rawEmail;
 
-    if (!nombreCompleto || !email || !password) {
+    if (typeof nombreCompleto !== 'string' || nombreCompleto.trim().length < 2 || nombreCompleto.trim().length > 150
+        || typeof email !== 'string' || email.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        || typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72
+        || (rolId !== undefined && rolId !== 2 && rolId !== 3)
+        || (telefono != null && (typeof telefono !== 'string' || telefono.trim().length > 30))
+        || (direccion != null && (typeof direccion !== 'string' || direccion.trim().length > 255))) {
       res.status(400).json({
         success: false,
-        error: 'Campos obligatorios: nombreCompleto, email, password',
+        error: 'Nombre, correo o contraseña inválidos. Selecciona DONOR o TECHNICIAN.',
         timestamp: new Date().toISOString()
       });
       return;
@@ -112,7 +121,7 @@ export const authController = {
     try {
       const [existing] = await pool.query<RowDataPacket[]>('SELECT id FROM usuarios WHERE email = ?', [email]);
       if (existing.length > 0) {
-        res.status(400).json({
+        res.status(409).json({
           success: false,
           error: 'El correo electrónico ya se encuentra registrado',
           timestamp: new Date().toISOString()
@@ -126,7 +135,7 @@ export const authController = {
       const [result] = await pool.query<ResultSetHeader>(`
         INSERT INTO usuarios (rol_id, nombre_completo, email, password_hash, telefono, direccion)
         VALUES (?, ?, ?, ?, ?, ?)
-      `, [rolId || 2, nombreCompleto, email, passwordHash, telefono || null, direccion || null]);
+      `, [rolId || 2, nombreCompleto, email, passwordHash, telefono?.trim() || null, direccion?.trim() || null]);
 
       res.status(201).json({
         success: true,
@@ -141,6 +150,10 @@ export const authController = {
       });
     } catch (error) {
       const err = error as Error;
+      if ((error as { code?: string }).code === 'ER_DUP_ENTRY') {
+        res.status(409).json({ success: false, error: 'El correo electrónico ya se encuentra registrado' });
+        return;
+      }
       res.status(500).json({
         success: false,
         error: `Error al registrar usuario: ${err.message}`,
@@ -161,11 +174,11 @@ export const authController = {
         SELECT u.id, u.rol_id, r.nombre AS rol_nombre, u.nombre_completo, u.email, u.telefono, u.direccion, u.created_at
         FROM usuarios u
         INNER JOIN roles r ON u.rol_id = r.id
-        WHERE u.id = ?
+        WHERE u.id = ? AND u.activo = TRUE
       `, [req.usuario.id]);
 
       if (rows.length === 0) {
-        res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        res.status(401).json({ success: false, error: 'Usuario no encontrado o cuenta inactiva' });
         return;
       }
 

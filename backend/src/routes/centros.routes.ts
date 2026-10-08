@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { listarCentros, obtenerCentro, crearCentro, actualizarCentro, desactivarCentro } from '../controllers/centros.controller';
+import { authenticateToken } from '../middleware/auth.middleware';
+import { authorizeRoles } from '../middleware/roles.middleware';
+const router: Router = Router();
+router.get('/', listarCentros);
+router.get('/:id', obtenerCentro);
+router.post('/', authenticateToken, authorizeRoles('ADMIN'), crearCentro);
+router.put('/:id', authenticateToken, authorizeRoles('ADMIN'), actualizarCentro);
+router.patch('/:id/desactivar', authenticateToken, authorizeRoles('ADMIN'), desactivarCentro);
+export default router;

@@ -1,0 +1,39 @@
+<section class="form-card"><h1>Publicar hardware</h1><p>Registra el dispositivo y el centro donde estará disponible para su entrega.</p>
+  @if (cargando()) { <p role="status">Cargando categorías y centros…</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (!cargando() && !opcionesCargadas()) {
+    <button (click)="cargarOpciones()">Reintentar carga</button>
+  } @else if (!cargando() && categorias().length === 0) {
+    <p>No hay categorías disponibles.</p>
+  }
+  <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="enviando()">
+    <fieldset [disabled]="cargando() || enviando() || !opcionesCargadas()">
+      <label for="titulo">Título *</label><input id="titulo" formControlName="titulo" maxlength="150" aria-describedby="titulo-error">
+      @if (form.controls.titulo.touched && form.controls.titulo.invalid) { <small class="error" id="titulo-error">El título debe tener de 3 a 150 caracteres.</small> }
+      <div class="fila"><div><label for="categoria">Categoría *</label><select id="categoria" formControlName="categoriaId" aria-describedby="categoria-error">
+        <option [ngValue]="0">Selecciona una categoría</option>
+        @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+      </select>@if (form.controls.categoriaId.touched && form.controls.categoriaId.invalid) { <small class="error" id="categoria-error">Selecciona una categoría.</small> }</div>
+      <div><label for="centro">Centro de origen *</label><select id="centro" formControlName="centroAcopioId" aria-describedby="centro-error">
+        <option [ngValue]="0">Selecciona un centro</option>
+        @for (c of centrosDisponibles(); track c.id) { <option [ngValue]="c.id">{{ c.nombre }} · {{ c.ciudad }}</option> }
+      </select>@if (form.controls.categoriaId.value > 0 && centrosDisponibles().length === 0) {
+        <small class="error" id="centro-error">No hay centros activos que reciban esta categoría. Elige otra categoría o solicita al administrador que configure un centro.</small>
+      } @else if (form.controls.centroAcopioId.touched && form.controls.centroAcopioId.invalid) { <small class="error" id="centro-error">Selecciona un centro que admita la categoría.</small> }</div></div>
+      <div class="fila"><div><label for="marca">Marca</label><input id="marca" formControlName="marca" maxlength="100" aria-describedby="marca-error">
+      @if (form.controls.marca.touched && form.controls.marca.invalid) { <small class="error" id="marca-error">Máximo 100 caracteres.</small> }</div>
+      <div><label for="modelo">Modelo</label><input id="modelo" formControlName="modelo" maxlength="100" aria-describedby="modelo-error">
+      @if (form.controls.modelo.touched && form.controls.modelo.invalid) { <small class="error" id="modelo-error">Máximo 100 caracteres.</small> }</div></div>
+      <label for="serie">Número de serie</label><input id="serie" formControlName="numeroSerie" maxlength="100" aria-describedby="serie-error">
+      @if (form.controls.numeroSerie.touched && form.controls.numeroSerie.invalid) { <small class="error" id="serie-error">Máximo 100 caracteres.</small> }
+      <div class="fila"><div><label for="condicion">Estado funcional *</label><select id="condicion" formControlName="estadoFuncional">
+        <option value="OPERATIVO">Operativo</option><option value="REPARABLE">Reparable</option><option value="DESGUACE_RECICLAJE">Desguace / reciclaje</option>
+      </select></div><div><label for="peso">Peso en kg *</label><input id="peso" type="number" formControlName="pesoKg" min="0.01" max="9999.99" step="0.01" aria-describedby="peso-error">
+      @if (form.controls.pesoKg.touched && form.controls.pesoKg.invalid) { <small class="error" id="peso-error">Peso mayor que 0, máximo 9999.99 kg y hasta 2 decimales.</small> }</div></div>
+      <label for="notas">Notas o especificaciones técnicas</label><textarea id="notas" formControlName="notas" rows="5" maxlength="5000" aria-describedby="notas-error"></textarea>
+      @if (form.controls.notas.touched && form.controls.notas.invalid) { <small class="error" id="notas-error">Máximo 5000 caracteres.</small> }
+      <button type="submit" [disabled]="enviando() || cargando() || !opcionesCargadas() || categorias().length === 0 || (form.controls.categoriaId.value > 0 && centrosDisponibles().length === 0)">{{ enviando() ? 'Publicando…' : 'Publicar hardware' }}</button>
+    </fieldset>
+    @if (enviando()) { <p role="status">Guardando el dispositivo…</p> }
+  </form>
+</section>

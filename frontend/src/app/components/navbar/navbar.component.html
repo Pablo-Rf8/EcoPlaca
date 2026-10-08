@@ -1,34 +1,31 @@
-<header class="eco-navbar-wrapper">
-  <div class="eco-nav-container">
-    <a routerLink="/" class="eco-brand" (click)="closeMenu()">
-      <div class="logo-icon">🌿</div>
-      <div class="brand-text">
-        <span class="brand-name">Eco<span class="accent">Placa</span></span>
-        <span class="brand-tagline">Trazabilidad RAEE</span>
+<header class="eco-navbar-wrapper"><div class="eco-nav-container">
+  <a routerLink="/catalogo" class="eco-brand" (click)="closeMenu()">
+    <div class="logo-icon">🌿</div><div class="brand-text">
+      <span class="brand-name">Eco<span class="accent">Placa</span></span>
+      <span class="brand-tagline">Trazabilidad RAEE</span>
+    </div>
+  </a>
+  <button class="mobile-toggle" (click)="toggleMenu()" aria-label="Abrir menú" [attr.aria-expanded]="isMenuOpen()">
+    <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+  </button>
+  <nav class="nav-links" [class.open]="isMenuOpen()">
+    <a routerLink="/catalogo" routerLinkActive="active" (click)="closeMenu()">Catálogo</a>
+    <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMenu()">Dashboard</a>
+    @if (auth.hasRole(['DONOR', 'ADMIN'])) {
+      <a routerLink="/nuevo-dispositivo" routerLinkActive="active" (click)="closeMenu()">Publicar hardware</a>
+    }
+    @if (auth.hasRole(['ADMIN', 'TECHNICIAN'])) {
+      <a routerLink="/transferencias" routerLinkActive="active" (click)="closeMenu()">Mis transferencias</a>
+      <a routerLink="/comentarios" routerLinkActive="active" (click)="closeMenu()">Comentarios y notas</a>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="user-badge"><span class="status-indicator"></span>
+        <span class="user-role">{{ auth.currentUser()?.nombreCompleto }} · {{ auth.currentUser()?.rol }}</span>
       </div>
-    </a>
-
-    <button class="mobile-toggle" (click)="toggleMenu()" aria-label="Abrir menú">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
-
-    <nav class="nav-links" [class.open]="isMenuOpen()">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">
-        Inicio
-      </a>
-      <a routerLink="/galeria" routerLinkActive="active" (click)="closeMenu()">
-        Galería de Dispositivos
-      </a>
-      <a routerLink="/comentarios" routerLinkActive="active" (click)="closeMenu()">
-        Comentarios y Notas
-      </a>
-
-      <div class="user-badge">
-        <span class="status-indicator"></span>
-        <span class="user-role">{{ usuarioActivo() }}</span>
-      </div>
-    </nav>
-  </div>
-</header>
+      <button type="button" (click)="logout()">Cerrar sesión</button>
+    } @else {
+      <a routerLink="/login" routerLinkActive="active" (click)="closeMenu()">Iniciar sesión</a>
+      <a routerLink="/register" routerLinkActive="active" (click)="closeMenu()">Registro</a>
+    }
+  </nav>
+</div></header>

@@ -1,15 +1,12 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar.component';
-
+import { NotificationService } from './services/notification.service';
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, NavbarComponent],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  selector: 'app-root', standalone: true, imports: [RouterOutlet, NavbarComponent],
+  templateUrl: './app.component.html', styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'EcoPlaca';
+  readonly title: string = 'EcoPlaca';
+  readonly notifications = inject(NotificationService);
 }

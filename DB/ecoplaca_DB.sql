@@ -96,7 +96,7 @@ CREATE TABLE `dispositivos` (
     `modelo` VARCHAR(100) NULL,
     `numero_serie` VARCHAR(100) NULL,
     `estado_funcional` ENUM('OPERATIVO', 'REPARABLE', 'DESGUACE_RECICLAJE') NOT NULL DEFAULT 'REPARABLE',
-    `estado_disponibilidad` ENUM('DISPONIBLE', 'RESERVADO', 'ASIGNADO', 'RECICLADO') NOT NULL DEFAULT 'DISPONIBLE',
+    `estado_disponibilidad` ENUM('DISPONIBLE', 'RESERVADO', 'ASIGNADO', 'RECICLADO', 'ENTREGADO') NOT NULL DEFAULT 'DISPONIBLE',
     `peso_kg` DECIMAL(6, 2) NOT NULL DEFAULT 0.00,
     `co2_evitado_kg` DECIMAL(8, 2) NOT NULL DEFAULT 0.00,
     `especificaciones` JSON NULL,
@@ -120,7 +120,7 @@ CREATE TABLE `ordenes_transferencia` (
     `tecnico_id` INT NOT NULL,
     `centro_origen_id` INT NOT NULL,
     `centro_destino_id` INT NULL,
-    `estado` ENUM('PENDIENTE', 'EN_TRANSITO', 'RECIBIDO', 'CANCELADO') NOT NULL DEFAULT 'PENDIENTE',
+    `estado` ENUM('PENDIENTE', 'EN_TRANSITO', 'RECIBIDO', 'CANCELADO', 'COMPLETADA') NOT NULL DEFAULT 'PENDIENTE',
     `motivo` VARCHAR(255) NOT NULL,
     `fecha_solicitud` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `fecha_completado` TIMESTAMP NULL,
@@ -143,9 +143,9 @@ INSERT INTO `roles` (`id`, `nombre`, `descripcion`) VALUES
 -- Usuarios con hash BCrypt (contraseña de prueba: 'ecoplaca2026')
 -- Hash generado con bcrypt salt 10 rounds para 'ecoplaca2026': $2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G
 INSERT INTO `usuarios` (`id`, `rol_id`, `nombre_completo`, `email`, `password_hash`, `telefono`, `direccion`) VALUES
-(1, 1, 'Carlos Mendoza (Admin)', 'admin@ecoplaca.org', '$2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G', '+52 55 1122 3344', 'Av. Reforma 400, CDMX'),
-(2, 2, 'TecnoEmpresa Donaciones', 'contacto@tecnoempresa.mx', '$2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G', '+52 55 9988 7766', 'Parque Tecnológico 12, Monterrey'),
-(3, 3, 'Ing. Laura Valenzuela (Técnico)', 'laura.tecnico@ecoplaca.org', '$2a$10$oX3i6G/w7a8Z9n1yBwXyOegvD.jK.K4Y3G6gXlS21M8W5D3B8D.8G', '+52 33 4455 6677', 'Laboratorio Re-Boot, Guadalajara');
+(1, 1, 'Carlos Mendoza (Admin)', 'admin@ecoplaca.org', '$2a$10$.ePJYTtRo/4PMmes7NHiSe.JwrhL33RxRBd4TuV1EjAPkQev4qBym', '+52 55 1122 3344', 'Av. Reforma 400, CDMX'),
+(2, 2, 'TecnoEmpresa Donaciones', 'contacto@tecnoempresa.mx', '$2a$10$.ePJYTtRo/4PMmes7NHiSe.JwrhL33RxRBd4TuV1EjAPkQev4qBym', '+52 55 9988 7766', 'Parque Tecnológico 12, Monterrey'),
+(3, 3, 'Ing. Laura Valenzuela (Técnico)', 'laura.tecnico@ecoplaca.org', '$2a$10$.ePJYTtRo/4PMmes7NHiSe.JwrhL33RxRBd4TuV1EjAPkQev4qBym', '+52 33 4455 6677', 'Laboratorio Re-Boot, Guadalajara');
 
 -- 4 Categorías oficiales de RAEE
 INSERT INTO `categorias_raee` (`id`, `codigo`, `nombre`, `descripcion`, `factor_co2_kg`) VALUES

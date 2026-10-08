@@ -1,67 +1,61 @@
-<section class="galeria-section">
-  <div class="galeria-header">
-    <div>
-      <h2>Galería de Dispositivos Catalogados</h2>
-      <p>Inventario trazable de hardware y componentes recuperados de vertederos.</p>
-    </div>
-
-    <div class="filtros-container">
-      <button [class.activo]="filtroActual() === 'TODOS'" (click)="filtrar('TODOS')">Todos</button>
-      <button [class.activo]="filtroActual() === 'DISPONIBLE'" (click)="filtrar('DISPONIBLE')">Disponibles</button>
-      <button [class.activo]="filtroActual() === 'RESERVADO'" (click)="filtrar('RESERVADO')">Reservados</button>
-      <button [class.activo]="filtroActual() === 'ASIGNADO'" (click)="filtrar('ASIGNADO')">Asignados</button>
-    </div>
-  </div>
-
+<section class="catalogo">
+  <header><h1>Catálogo de dispositivos</h1><p>Hardware trazable para dar una segunda vida a los RAEE.</p></header>
+  <form class="filtros" [formGroup]="filtros" (submit)="$event.preventDefault()">
+    <label>Buscar<input type="search" formControlName="busqueda" placeholder="Título, marca o código"></label>
+    <label>Estado<select formControlName="estado">
+      <option value="">Todos</option><option value="DISPONIBLE">Disponible</option>
+      <option value="RESERVADO">Reservado</option><option value="ENTREGADO">Entregado</option>
+    </select></label>
+    <label>Condición<select formControlName="estadoFuncional">
+      <option value="">Todas</option><option value="OPERATIVO">Operativo</option>
+      <option value="REPARABLE">Repuestos</option><option value="DESGUACE_RECICLAJE">Chatarra</option>
+    </select></label>
+  </form>
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
   @if (cargando()) {
-    <div class="cargando-box">
-      <p>Cargando dispositivos desde la base de datos...</p>
-    </div>
+    <div class="estado" role="status"><span class="spinner" aria-hidden="true"></span> Cargando dispositivos…</div>
+  } @else if (error()) {
+    <div class="estado error" role="alert"><p>{{ error() }}</p><button (click)="reintentar()">Reintentar</button></div>
+  } @else if (dispositivos().length === 0) {
+    <p class="estado">No hay dispositivos con estos filtros</p>
   } @else {
-    <div class="grid-dispositivos">
+    <div class="grid">
       @for (d of dispositivos(); track d.id) {
-        <div class="card-dispositivo">
-          <div class="card-header">
-            <span class="badge-codigo">{{ d.codigoTrazabilidad }}</span>
-            <span class="badge-estado" [ngClass]="d.estadoDisponibilidad">{{ d.estadoDisponibilidad }}</span>
-          </div>
-
-          <div class="card-imagen-placeholder">
-            <span class="icono-tipo">💻</span>
-            <span class="categoria-tag">{{ d.categoriaNombre || 'Hardware RAEE' }}</span>
-          </div>
-
-          <h3 class="dispositivo-titulo">{{ d.titulo }}</h3>
-
-          <div class="datos-tecnicos">
-            <div class="dato-fila" *ngIf="d.marca || d.modelo">
-              <span class="etiqueta">Marca/Modelo:</span>
-              <span class="valor">{{ d.marca }} {{ d.modelo }}</span>
-            </div>
-            <div class="dato-fila">
-              <span class="etiqueta">Condición:</span>
-              <span class="valor condicion-tag" [ngClass]="d.estadoFuncional">{{ d.estadoFuncional }}</span>
-            </div>
-            <div class="dato-fila">
-              <span class="etiqueta">Peso:</span>
-              <span class="valor">{{ d.pesoKg }} kg</span>
-            </div>
-            <div class="dato-fila co2-fila">
-              <span class="etiqueta">CO₂ Evitado:</span>
-              <span class="valor co2-valor">🌿 -{{ d.co2EvitadoKg }} kg</span>
-            </div>
-          </div>
-
-          <p class="notas-texto" *ngIf="d.notas">{{ d.notas }}</p>
-
-          <div class="card-footer">
-            <span class="centro-info" *ngIf="d.centroAcopioNombre">📍 {{ d.centroAcopioNombre }}</span>
-            <button class="btn-solicitar" [disabled]="d.estadoDisponibilidad !== 'DISPONIBLE'">
-              {{ d.estadoDisponibilidad === 'DISPONIBLE' ? 'Solicitar Traspaso' : 'No Disponible' }}
-            </button>
-          </div>
-        </div>
+        <article class="card">
+          <div class="badges"><span>{{ d.codigoTrazabilidad }}</span><strong [class.reservado]="d.estadoDisponibilidad === 'RESERVADO'">{{ d.estadoDisponibilidad }}</strong></div>
+          <div class="ilustracion" aria-hidden="true">♻</div>
+          <p class="categoria">{{ d.categoriaNombre || 'Hardware RAEE' }}</p>
+          <h2>{{ d.titulo }}</h2>
+          <dl><dt>Marca / modelo</dt><dd>{{ d.marca || 'Sin marca' }} {{ d.modelo }}</dd>
+            <dt>Condición</dt><dd>{{ condicion(d.estadoFuncional) }}</dd>
+            <dt>Peso</dt><dd>{{ d.pesoKg | number:'1.2-2' }} kg</dd>
+            <dt>CO₂ potencial evitado</dt><dd>{{ d.co2EvitadoKg | number:'1.2-2' }} kg</dd>
+          </dl>
+          @if (d.notas) { <p>{{ d.notas }}</p> }
+          <footer><p>{{ d.centroAcopioNombre || 'Centro sin asignar' }}</p>
+            @if (auth.hasRole(['TECHNICIAN'])) {
+              <button (click)="abrirReserva(d)" [disabled]="d.estadoDisponibilidad !== 'DISPONIBLE' || reservando()">
+                {{ d.estadoDisponibilidad === 'DISPONIBLE' ? 'Solicitar para Reparación' : 'No disponible' }}
+              </button>
+            }
+          </footer>
+        </article>
       }
     </div>
   }
 </section>
+<dialog #confirmacion aria-labelledby="reserva-title" (cancel)="cancelarDialogo($event)">
+  <h2 id="reserva-title">Confirmar solicitud</h2>
+  <p>{{ seleccionado()?.titulo }}</p><p>El dispositivo quedará reservado para ti al confirmar.</p>
+  @if (errorReserva()) { <p class="error" role="alert">{{ errorReserva() }}</p> }
+  <form [formGroup]="reservaForm" (ngSubmit)="confirmarReserva()" [attr.aria-busy]="reservando()">
+    <label for="motivo">Motivo de la solicitud</label>
+    <textarea id="motivo" formControlName="motivo" rows="4" maxlength="255" aria-describedby="motivo-error" autofocus></textarea>
+    @if (reservaForm.controls.motivo.touched && reservaForm.controls.motivo.invalid) {
+      <small id="motivo-error" class="error">Escribe un motivo de 1 a 255 caracteres.</small>
+    }
+    <div class="acciones"><button type="button" class="secundario" (click)="cerrarReserva()" [disabled]="reservando()">Cancelar</button>
+      <button type="submit" [disabled]="reservando()">{{ reservando() ? 'Reservando…' : 'Confirmar solicitud' }}</button></div>
+    @if (reservando()) { <p role="status">Guardando la reserva…</p> }
+  </form>
+</dialog>

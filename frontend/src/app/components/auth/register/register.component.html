@@ -1,0 +1,31 @@
+<section class="auth-card">
+  <h1>Crear cuenta</h1>
+  @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
+  <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="loading()">
+    <label for="register-name">Nombre completo</label>
+    <input id="register-name" formControlName="nombreCompleto" autocomplete="name" aria-describedby="register-name-error">
+    @if (form.controls.nombreCompleto.touched && form.controls.nombreCompleto.invalid) {
+      <small class="error" id="register-name-error">Ingresa un nombre de 2 a 150 caracteres.</small>
+    }
+    <label for="register-email">Correo electrónico</label>
+    <input id="register-email" type="email" formControlName="email" autocomplete="email" aria-describedby="register-email-error">
+    @if (form.controls.email.touched && form.controls.email.invalid) {
+      <small class="error" id="register-email-error">Ingresa un correo válido de hasta 150 caracteres.</small>
+    }
+    <label for="register-password">Contraseña</label>
+    <input id="register-password" type="password" formControlName="password" autocomplete="new-password" aria-describedby="register-password-error">
+    @if (form.controls.password.touched && form.controls.password.invalid) {
+      <small class="error" id="register-password-error">La contraseña debe tener entre 8 y 72 caracteres.</small>
+    }
+    <label for="register-role">Tipo de cuenta</label>
+    <select id="register-role" formControlName="rolId" aria-describedby="register-role-error">
+      <option [ngValue]="2">Donante</option><option [ngValue]="3">Técnico</option>
+    </select>
+    @if (form.controls.rolId.touched && form.controls.rolId.invalid) {
+      <small class="error" id="register-role-error">Selecciona Donante o Técnico.</small>
+    }
+    <button type="submit" [disabled]="loading()">{{ loading() ? 'Registrando…' : 'Crear cuenta' }}</button>
+    @if (loading()) { <p role="status">Creando tu cuenta…</p> }
+  </form>
+  <p>¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
+</section>

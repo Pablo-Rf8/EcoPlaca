@@ -1,0 +1,27 @@
+<section class="panel"><header><div><h1>Mis transferencias</h1><p>Confirma la entrega únicamente después de recibir físicamente el hardware.</p></div>
+  <button (click)="cargar()" [disabled]="cargando() || confirmando()">Actualizar</button></header>
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
+  @if (cargando()) { <p role="status">Cargando órdenes…</p> }
+  @else if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @else if (activas().length === 0) { <p class="vacio">No tienes transferencias activas.</p> }
+  @else { <div class="grid">
+    @for (o of activas(); track o.id) {
+      <article><div class="estado"><strong>Orden #{{ o.id }}</strong><span>{{ o.estado }}</span></div>
+        <h2>{{ o.dispositivoTitulo }}</h2><p>{{ o.codigoTrazabilidad }}</p>
+        <dl><dt>Técnico</dt><dd>{{ o.tecnicoNombre }}</dd><dt>Solicitud</dt><dd>{{ o.fechaSolicitud | date:'short' }}</dd>
+          <dt>Peso</dt><dd>{{ o.pesoKg | number:'1.2-2' }} kg</dd>
+          <dt>Origen</dt><dd>{{ o.centroOrigenNombre }}</dd>
+          <dt>Destino</dt><dd>{{ o.centroDestinoNombre || 'Entrega al técnico' }}</dd></dl>
+        <p>{{ o.motivo }}</p><button (click)="abrirConfirmacion(o)" [disabled]="confirmando()">Confirmar Recepción Física</button>
+      </article>
+    }
+  </div> }
+</section>
+<dialog #confirmacion aria-labelledby="confirm-title" (cancel)="cancelar($event)">
+  <h2 id="confirm-title">Confirmar recepción física</h2><p>{{ seleccionada()?.dispositivoTitulo }}</p>
+  <p><strong>Esta acción es irreversible desde este panel.</strong> Confirma solo si ya recibiste el dispositivo. La orden quedará COMPLETADA y el dispositivo ENTREGADO.</p>
+  @if (errorConfirmacion()) { <p class="error" role="alert">{{ errorConfirmacion() }}</p> }
+  <div class="acciones"><button class="secundario" (click)="cerrar()" [disabled]="confirmando()" autofocus>Cancelar</button>
+    <button (click)="confirmar()" [disabled]="confirmando()">{{ confirmando() ? 'Confirmando…' : 'Sí, recibí el hardware' }}</button></div>
+  @if (confirmando()) { <p role="status">Registrando la entrega…</p> }
+</dialog>

@@ -19,9 +19,10 @@ export const CATEGORY_CARBON_FACTORS: Record<string, number> = {
  * @param categoryCode Código de la categoría RAEE
  * @returns kg de CO2 equivalente evitados (redondeado a 2 decimales)
  */
-export function calculateAvoidedCo2(weightKg: number, categoryCode: string = 'DEFAULT'): number {
+export function calculateAvoidedCo2(weightKg: number, categoryCode: string = 'DEFAULT', factorOverride?: number): number {
   if (weightKg <= 0) return 0;
-  const factor = CATEGORY_CARBON_FACTORS[categoryCode] || CATEGORY_CARBON_FACTORS['DEFAULT'];
+  const factor: number = factorOverride ?? CATEGORY_CARBON_FACTORS[categoryCode] ?? CATEGORY_CARBON_FACTORS['DEFAULT'];
+  if (!Number.isFinite(factor) || factor <= 0) throw new RangeError('Factor de CO2 inválido');
   const co2Avoided = weightKg * factor;
   return Math.round(co2Avoided * 100) / 100;
 }

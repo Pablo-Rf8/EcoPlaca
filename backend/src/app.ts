@@ -1,32 +1,25 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application } from 'express';
 import cors from 'cors';
+import { allowedOrigins } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
 import indexRoutes from './routes/index.routes';
-
 const app: Application = express();
-
-// Middlewares globales
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Endpoint de salud requerido: GET /api/health
-app.get('/api/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', app: 'EcoPlaca API' });
-});
-
-// Montaje de rutas base bajo el prefijo /api
+const origins: string[] = allowedOrigins();
+app.use(cors({
+  origin(origin, callback): void {
+    if (!origin || origins.includes(origin)) callback(null, true);
+    else callback(Object.assign(new Error('Origen no permitido por CORS'), { status: 403 }));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false, maxAge: 600
+}));
+app.disable('x-powered-by');
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use('/api', indexRoutes);
-
-// Manejo de rutas inexistentes (404)
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: `Ruta no encontrada: [${req.method}] ${req.originalUrl}`
-  });
+app.use((req, res): void => {
+  res.status(404).json({ success: false, error: `Ruta no encontrada: [${req.method}] ${req.originalUrl}` });
 });
-
-// Middleware de manejo de errores
 app.use(errorHandler);
-
 export default app;

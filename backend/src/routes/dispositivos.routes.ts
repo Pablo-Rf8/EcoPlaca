@@ -1,12 +1,15 @@
 import { Router } from 'express';
+import { actualizarDispositivo, eliminarDispositivo } from '../controllers/inventario.controller';
 import { dispositivosController } from '../controllers/dispositivos.controller';
+import { crearDispositivo, opcionesPublicacion } from '../controllers/publicaciones.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
-
-const router = Router();
-
+import { authorizeRoles } from '../middleware/roles.middleware';
+const router: Router = Router();
 router.get('/', dispositivosController.getDispositivos);
+router.get('/opciones-publicacion', authenticateToken, authorizeRoles('DONOR', 'ADMIN'), opcionesPublicacion);
 router.get('/:id', dispositivosController.getDispositivoById);
-router.post('/', dispositivosController.createDispositivo);
-router.patch('/:id/estado', authenticateToken, dispositivosController.updateEstado);
-
+router.post('/', authenticateToken, authorizeRoles('DONOR', 'ADMIN'), crearDispositivo);
+router.patch('/:id/estado', authenticateToken, authorizeRoles('ADMIN'), dispositivosController.updateEstado);
+router.put('/:id', authenticateToken, authorizeRoles('DONOR', 'ADMIN'), actualizarDispositivo);
+router.delete('/:id', authenticateToken, authorizeRoles('DONOR', 'ADMIN'), eliminarDispositivo);
 export default router;

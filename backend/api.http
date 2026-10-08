@@ -1,5 +1,6 @@
 @baseUrl = http://localhost:3000/api
 @contentType = application/json
+@dispositivoTransferenciaId = 2
 
 ### 1. Health Check (Verificación de estado)
 GET {{baseUrl}}/health
@@ -84,3 +85,324 @@ Content-Type: {{contentType}}
   "estadoFuncional": "REPARABLE",
   "notas": "Apartado para taller de estudiantes de bachillerato técnico."
 }
+
+### 11. Login del técnico responsable
+# @name loginTecnico
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "laura.tecnico@ecoplaca.org",
+  "password": "ecoplaca2026"
+}
+
+@tecnicoToken = {{loginTecnico.response.body.data.token}}
+
+### 12. Métricas antes de la entrega (200)
+GET {{baseUrl}}/dashboard/metricas
+Authorization: Bearer {{tecnicoToken}}
+
+### 13. Solicitar transferencia (201, dispositivo RESERVADO)
+# Usar un dispositivo DISPONIBLE sin órdenes activas; el dispositivo seed 2 cumple.
+# @name solicitarTransferencia
+POST {{baseUrl}}/transferencias
+Authorization: Bearer {{tecnicoToken}}
+Content-Type: {{contentType}}
+
+{
+  "dispositivoId": {{dispositivoTransferenciaId}},
+  "centroDestinoId": 2,
+  "motivo": "Recuperación para taller de reparación"
+}
+
+@transferenciaId = {{solicitarTransferencia.response.body.data.id}}
+
+### 14. Reservar nuevamente el mismo dispositivo (409)
+POST {{baseUrl}}/transferencias
+Authorization: Bearer {{tecnicoToken}}
+Content-Type: {{contentType}}
+
+{
+  "dispositivoId": {{dispositivoTransferenciaId}},
+  "centroDestinoId": 2,
+  "motivo": "Segunda solicitud que debe rechazarse"
+}
+
+### 15. Confirmar entrega física (200, COMPLETADA y ENTREGADO)
+PATCH {{baseUrl}}/transferencias/{{transferenciaId}}/completar
+Authorization: Bearer {{tecnicoToken}}
+
+### 16. Repetir confirmación (409, métricas sin duplicación)
+PATCH {{baseUrl}}/transferencias/{{transferenciaId}}/completar
+Authorization: Bearer {{tecnicoToken}}
+
+### 17. Métricas después de la entrega (200)
+# Con el dispositivo seed 2: incremento de 1.60 kg y 29.12 kg CO2.
+GET {{baseUrl}}/dashboard/metricas
+Authorization: Bearer {{tecnicoToken}}
+
+### 18. Solicitud inválida (400)
+POST {{baseUrl}}/transferencias
+Authorization: Bearer {{tecnicoToken}}
+Content-Type: {{contentType}}
+
+{
+  "dispositivoId": -1,
+  "motivo": ""
+}
+
+### 19. Dashboard sin JWT (401)
+GET {{baseUrl}}/dashboard/metricas
+
+### 20. Administrador solicita como técnico (403)
+POST {{baseUrl}}/transferencias
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "dispositivoId": {{dispositivoTransferenciaId}},
+  "motivo": "Solicitud con rol no autorizado"
+}
+
+### TAREA 5 - Ciclo completo con usuarios y hardware nuevos
+# Ejecutar en este orden. Cambia los IDs de categoría/centro según opciones-publicacion.
+### Registro de donante nuevo
+# @name registroDonanteT5
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "nombreCompleto": "Donante Evaluacion Tarea 5",
+  "email": "donante.t5.{{$timestamp}}@example.com",
+  "password": "EcoPlacaDemo2026!",
+  "rolId": 2
+}
+
+### Login del donante recién creado
+# @name loginDonanteT5
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{registroDonanteT5.response.body.data.email}}",
+  "password": "EcoPlacaDemo2026!"
+}
+
+@donanteT5Token = {{loginDonanteT5.response.body.data.token}}
+
+### Categorías y centros reales
+GET {{baseUrl}}/dispositivos/opciones-publicacion
+Authorization: Bearer {{donanteT5Token}}
+
+### Publicar hardware nuevo (201)
+# @name publicarHardwareT5
+POST {{baseUrl}}/dispositivos
+Authorization: Bearer {{donanteT5Token}}
+Content-Type: application/json
+
+{
+  "titulo": "Placa madre nueva para evaluación",
+  "categoriaId": 1,
+  "centroAcopioId": 1,
+  "marca": "ASUS",
+  "modelo": "Placa de evaluación",
+  "numeroSerie": "T5-{{$timestamp}}",
+  "estadoFuncional": "REPARABLE",
+  "pesoKg": 1.25,
+  "notas": "Hardware publicado durante el recorrido completo."
+}
+
+@hardwareT5Id = {{publicarHardwareT5.response.body.data.id}}
+
+### Registro de técnico nuevo
+# @name registroTecnicoT5
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "nombreCompleto": "Tecnico Evaluacion Tarea 5",
+  "email": "tecnico.t5.{{$timestamp}}@example.com",
+  "password": "EcoPlacaDemo2026!",
+  "rolId": 3
+}
+
+### Login del técnico recién creado
+# @name loginTecnicoT5
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{registroTecnicoT5.response.body.data.email}}",
+  "password": "EcoPlacaDemo2026!"
+}
+
+@tecnicoT5Token = {{loginTecnicoT5.response.body.data.token}}
+
+### Métricas antes de entrega
+GET {{baseUrl}}/dashboard/metricas
+Authorization: Bearer {{tecnicoT5Token}}
+
+### Reserva del hardware nuevo
+# @name reservaT5
+POST {{baseUrl}}/transferencias
+Authorization: Bearer {{tecnicoT5Token}}
+Content-Type: application/json
+
+{
+  "dispositivoId": {{hardwareT5Id}},
+  "motivo": "Reparación durante la evaluación de principio a fin"
+}
+
+@ordenT5Id = {{reservaT5.response.body.data.id}}
+
+### Mis órdenes del técnico
+GET {{baseUrl}}/transferencias/mis-ordenes
+Authorization: Bearer {{tecnicoT5Token}}
+
+### Confirmar recepción física solo después de recibir el hardware (200)
+PATCH {{baseUrl}}/transferencias/{{ordenT5Id}}/completar
+Authorization: Bearer {{tecnicoT5Token}}
+
+### Verificar hardware ENTREGADO
+GET {{baseUrl}}/dispositivos/{{hardwareT5Id}}
+
+### Verificar orden COMPLETADA
+GET {{baseUrl}}/transferencias/mis-ordenes
+Authorization: Bearer {{tecnicoT5Token}}
+
+### Métricas tras entrega (incremento esperado: 1.25 kg y 44.38 kg CO2 con RAEE-MB)
+GET {{baseUrl}}/dashboard/metricas
+Authorization: Bearer {{tecnicoT5Token}}
+
+### Repetir entrega (409, no duplica impacto)
+PATCH {{baseUrl}}/transferencias/{{ordenT5Id}}/completar
+Authorization: Bearer {{tecnicoT5Token}}
+
+### Donante intenta listar órdenes (403)
+GET {{baseUrl}}/transferencias/mis-ordenes
+Authorization: Bearer {{donanteT5Token}}
+
+### Publicación sin JWT (401)
+POST {{baseUrl}}/dispositivos
+Content-Type: application/json
+
+{ "titulo": "Publicación sin sesión" }
+
+### TAREA 6 - CRUD categorías y centros (usar token de ADMIN configurado en seed)
+# Las lecturas son públicas. Para escrituras, ejecutar loginAdmin con el email/password reales del ADMIN creado.
+### Listar categorías
+GET {{baseUrl}}/categorias
+
+### Obtener categoría
+GET {{baseUrl}}/categorias/1
+
+### Crear categoría nueva
+# @name crearCategoriaT6
+POST {{baseUrl}}/categorias
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "codigo": "RAEE-T6",
+  "nombre": "Hardware de evaluación T6",
+  "descripcion": "Categoría CRUD de evaluación",
+  "factorCo2Kg": 30.5
+}
+
+@categoriaT6Id = {{crearCategoriaT6.response.body.data.id}}
+
+### Actualizar categoría
+PUT {{baseUrl}}/categorias/{{categoriaT6Id}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "codigo": "RAEE-T6",
+  "nombre": "Hardware de evaluación actualizado",
+  "descripcion": "Actualización completa",
+  "factorCo2Kg": 32.0
+}
+
+### Listar centros
+GET {{baseUrl}}/centros
+
+### Crear centro con relación M:N
+# @name crearCentroT6
+POST {{baseUrl}}/centros
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Centro de evaluación T6",
+  "direccion": "Zona 1",
+  "ciudad": "Guatemala",
+  "telefono": "+502 5555 0000",
+  "capacidadKg": 500.0,
+  "categoriasIds": [{{categoriaT6Id}}]
+}
+
+@centroT6Id = {{crearCentroT6.response.body.data.id}}
+
+### Obtener centro creado con categorías
+GET {{baseUrl}}/centros/{{centroT6Id}}
+
+### Borrar categoría vinculada (409)
+DELETE {{baseUrl}}/categorias/{{categoriaT6Id}}
+Authorization: Bearer {{authToken}}
+
+### Editar centro y desvincular categoría sin dispositivos pendientes
+PUT {{baseUrl}}/centros/{{centroT6Id}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Centro de evaluación actualizado",
+  "direccion": "Zona 2",
+  "ciudad": "Guatemala",
+  "telefono": null,
+  "capacidadKg": 600.0,
+  "categoriasIds": []
+}
+
+### Desactivar centro (200, conserva datos y relaciones)
+PATCH {{baseUrl}}/centros/{{centroT6Id}}/desactivar
+Authorization: Bearer {{authToken}}
+
+### Borrar categoría ahora sin vínculos (200)
+DELETE {{baseUrl}}/categorias/{{categoriaT6Id}}
+Authorization: Bearer {{authToken}}
+
+### Verificar categoría eliminada (404)
+GET {{baseUrl}}/categorias/{{categoriaT6Id}}
+
+### Crear categoría sin token (401)
+POST {{baseUrl}}/categorias
+Content-Type: application/json
+
+{ "codigo": "RAEE-NOAUTH", "nombre": "Sin sesión", "factorCo2Kg": 25 }
+
+### Donante intenta crear categoría (403, usa token Tarea 5)
+POST {{baseUrl}}/categorias
+Authorization: Bearer {{donanteT5Token}}
+Content-Type: application/json
+
+{ "codigo": "RAEE-NOROL", "nombre": "Sin permiso", "factorCo2Kg": 25 }
+
+### CRUD 3: editar hardware disponible sin historial
+# Usar un dispositivo nuevo, antes de reservarlo; el hardware de Tarea 5 ya entregado debe devolver 409.
+PUT {{baseUrl}}/dispositivos/{{hardwareT5Id}}
+Authorization: Bearer {{donanteT5Token}}
+Content-Type: application/json
+
+{
+  "titulo": "Placa madre actualizada",
+  "categoriaId": 1,
+  "centroAcopioId": 1,
+  "estadoFuncional": "REPARABLE",
+  "pesoKg": 1.25,
+  "notas": "Edición completa"
+}
+
+### Retirar hardware (solo disponible sin historial; entregado devuelve 409)
+DELETE {{baseUrl}}/dispositivos/{{hardwareT5Id}}
+Authorization: Bearer {{donanteT5Token}}

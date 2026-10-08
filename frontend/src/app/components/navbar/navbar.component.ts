@@ -1,23 +1,14 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-
+import { AuthService } from '../../services/auth.service';
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+  selector: 'app-navbar', standalone: true, imports: [RouterLink, RouterLinkActive],
+  templateUrl: './navbar.component.html', styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent {
-  isMenuOpen = signal<boolean>(false);
-  usuarioActivo = signal<string>('Taller Técnico Re-Boot');
-
-  toggleMenu(): void {
-    this.isMenuOpen.update(val => !val);
-  }
-
-  closeMenu(): void {
-    this.isMenuOpen.set(false);
-  }
+  readonly auth = inject(AuthService);
+  readonly isMenuOpen = signal<boolean>(false);
+  toggleMenu(): void { this.isMenuOpen.update((value: boolean): boolean => !value); }
+  closeMenu(): void { this.isMenuOpen.set(false); }
+  logout(): void { this.closeMenu(); this.auth.logout(); }
 }

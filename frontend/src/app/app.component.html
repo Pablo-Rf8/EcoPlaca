@@ -1,7 +1,12 @@
 <div class="eco-app-layout">
   <app-navbar></app-navbar>
-
   <main class="main-content">
+    @if (notifications.message()) {
+      <div role="alert" style="padding:1rem;background:#fff3cd;color:#1B4965">
+        {{ notifications.message() }}
+        <button type="button" (click)="notifications.dismiss()">Cerrar aviso</button>
+      </div>
+    }
     <router-outlet></router-outlet>
   </main>
 </div>
