@@ -18,9 +18,12 @@ interface Device { id: number; titulo: string; donanteId: number; centroAcopioId
 interface Order { id: number; tecnicoId: number; dispositivoId: number; estado: string; }
 interface Metrics { totalKgRecuperados: number; co2EvitadoKg: number; transferenciasPorEstado: Record<string, number>; }
 interface ApiOptions { token?: string; body?: unknown; rawBody?: string; headers?: Record<string, string>; }
+const hasEnv = (name: string): boolean => !!process.env[name]?.trim();
+const integrationConfigured = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'SEED_ADMIN_EMAIL', 'SEED_ADMIN_PASSWORD']
+  .every(hasEnv);
 
 test('REST and MySQL integration on an isolated local database', {
-  skip: process.env.ECOPLACA_INTEGRATION !== '1', timeout: 120000
+  skip: process.env.ECOPLACA_INTEGRATION !== '1' || !integrationConfigured, timeout: 120000
 }, async t => {
   const database = requiredEnv('DB_NAME');
   assert.ok(database === 'ecoplaca_qa' || database.endsWith('_test'), 'Integration requires DB_NAME=ecoplaca_qa or a name ending in _test');
