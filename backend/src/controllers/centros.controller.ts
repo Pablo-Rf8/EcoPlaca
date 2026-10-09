@@ -36,6 +36,11 @@ async function writeCategories(connection: PoolConnection, id: number, ids: numb
     `SELECT id FROM dispositivos WHERE centro_acopio_id = ? AND estado_disponibilidad IN ('DISPONIBLE','RESERVADO')
      ${ids.length ? 'AND categoria_id NOT IN (' + ids.map(() => '?').join(',') + ')' : ''} LIMIT 1`, [id, ...ids]);
   if (devices.length) throw new HttpError('No puedes retirar categorías de dispositivos disponibles o reservados en este centro', 409);
+  const [incoming] = await connection.execute<RowDataPacket[]>(
+    `SELECT o.id FROM ordenes_transferencia o JOIN dispositivos d ON d.id = o.dispositivo_id
+     WHERE o.centro_destino_id = ? AND o.estado IN ('PENDIENTE','EN_TRANSITO')
+     ${ids.length ? 'AND d.categoria_id NOT IN (' + ids.map(() => '?').join(',') + ')' : ''} LIMIT 1`, [id, ...ids]);
+  if (incoming.length) throw new HttpError('No puedes retirar categorías necesarias para transferencias activas hacia este centro', 409);
   await connection.execute('DELETE FROM centros_categorias WHERE centro_id = ?', [id]);
   for (const categoryId of ids) {
     await connection.execute('INSERT INTO centros_categorias (centro_id, categoria_id) VALUES (?, ?)', [id, categoryId]);
@@ -78,6 +83,10 @@ export const desactivarCentro = crudHandler(async (req, res): Promise<void> => {
   const result = await inTransaction(async connection => {
     const [centers] = await connection.execute<RowDataPacket[]>('SELECT id FROM centros_acopio WHERE id = ? FOR UPDATE', [id]);
     if (!centers[0]) throw new HttpError('Centro no encontrado', 404);
+    const [orders] = await connection.execute<RowDataPacket[]>(
+      `SELECT id FROM ordenes_transferencia WHERE (centro_origen_id = ? OR centro_destino_id = ?)
+       AND estado IN ('PENDIENTE','EN_TRANSITO') LIMIT 1`, [id, id]);
+    if (orders.length) throw new HttpError('No puedes desactivar un centro con transferencias activas', 409);
     await connection.execute('UPDATE centros_acopio SET activo = FALSE WHERE id = ?', [id]);
     return (await read(connection, id))[0];
   });

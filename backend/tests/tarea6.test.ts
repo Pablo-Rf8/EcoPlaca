@@ -93,6 +93,7 @@ test('invalid centre categories roll back all inserted centre data', async () =>
 test('centre deactivation keeps its category relations', async () => {
   let deactivated = false;
   connection(async sql => {
+    if (sql.includes('FROM ordenes_transferencia')) return [[], []];
     if (sql.startsWith('UPDATE')) { deactivated = true; return [{ affectedRows: 1 }, []]; }
     if (sql.includes('FROM centros_categorias')) return [[{ centroId: 1, categoriaId: 4 }], []];
     return [[{ id: 1, nombre: 'Centro', direccion: 'Zona 1', ciudad: 'Guatemala', telefono: null,

@@ -15,7 +15,7 @@ const tituloValido: ValidatorFn = (control: AbstractControl): ValidationErrors |
 };
 const pesoValido: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value: unknown = control.value;
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 9999.99
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0.01 && value <= 9999.99
     && Math.abs(value * 100 - Math.round(value * 100)) < 0.000001 ? null : { peso: true };
 };
 @Component({

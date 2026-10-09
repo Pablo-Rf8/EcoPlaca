@@ -1,17 +1,19 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { jwtExpiresInSeconds } from '../config/env';
 
 export const authController = {
   // Inicio de sesión con autenticación BCrypt y generación de JWT
-  login: async (req: Request, res: Response): Promise<void> => {
+  login: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { email: rawEmail, password } = req.body ?? {};
     const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : rawEmail;
 
-    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
+    if (typeof email !== 'string' || email.length > 150 || typeof password !== 'string'
+        || !email.trim() || !password || Buffer.byteLength(password, 'utf8') > 72) {
       res.status(400).json({
         success: false,
         error: 'Debe ingresar email y contraseña',
@@ -71,7 +73,7 @@ export const authController = {
           nombre: usuario.nombre_completo
         },
         secret,
-        { expiresIn: '7d' }
+        { expiresIn: jwtExpiresInSeconds() }
       );
 
       res.status(200).json({
@@ -89,17 +91,12 @@ export const authController = {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json({
-        success: false,
-        error: `Error interno de autenticación: ${err.message}`,
-        timestamp: new Date().toISOString()
-      });
+      next(error);
     }
   },
 
   // Registro de nuevo donante o técnico
-  register: async (req: Request, res: Response): Promise<void> => {
+  register: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { nombreCompleto: rawName, email: rawEmail, password, rolId, telefono, direccion } = req.body ?? {};
     const nombreCompleto = typeof rawName === 'string' ? rawName.trim() : rawName;
     const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : rawEmail;
@@ -149,21 +146,16 @@ export const authController = {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      const err = error as Error;
       if ((error as { code?: string }).code === 'ER_DUP_ENTRY') {
         res.status(409).json({ success: false, error: 'El correo electrónico ya se encuentra registrado' });
         return;
       }
-      res.status(500).json({
-        success: false,
-        error: `Error al registrar usuario: ${err.message}`,
-        timestamp: new Date().toISOString()
-      });
+      next(error);
     }
   },
 
   // Perfil del usuario autenticado
-  perfil: async (req: AuthRequest, res: Response): Promise<void> => {
+  perfil: async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!req.usuario) {
       res.status(401).json({ success: false, error: 'No autorizado' });
       return;
@@ -188,8 +180,7 @@ export const authController = {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      const err = error as Error;
-      res.status(500).json({ success: false, error: err.message });
+      next(error);
     }
   }
 };

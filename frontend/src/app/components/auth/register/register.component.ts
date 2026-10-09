@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../services/auth.service';
-import { errorMessage, nonBlank } from '../auth-form.util';
+import { errorMessage, nombreValido, passwordBytesValidos } from '../auth-form.util';
 
 @Component({
   selector: 'app-register', standalone: true, imports: [ReactiveFormsModule, RouterLink],
@@ -18,9 +18,9 @@ export class RegisterComponent {
   readonly passwordVisible = signal<boolean>(false);
   readonly error = signal<string | null>(null);
   readonly form = inject(FormBuilder).nonNullable.group({
-    nombreCompleto: ['', [nonBlank, Validators.minLength(2), Validators.maxLength(150)]],
+    nombreCompleto: ['', [nombreValido]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
+    password: ['', [Validators.required, Validators.minLength(8), passwordBytesValidos]],
     rolId: [2, [Validators.required, Validators.pattern(/^[23]$/)]]
   });
   submit(): void {

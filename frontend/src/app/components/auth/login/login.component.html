@@ -21,7 +21,7 @@
         [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}</button>
     </div>
     @if (form.controls.password.touched && form.controls.password.invalid) {
-      <small class="error" id="login-password-error">La contraseña debe tener entre 8 y 72 caracteres.</small>
+      <small class="error" id="login-password-error">Usa entre 8 y 72 caracteres; acorta la contraseña si contiene muchos acentos o emojis.</small>
     }
     <button class="submit-button" type="submit" [disabled]="loading()">{{ loading() ? 'Iniciando sesión…' : 'Iniciar sesión' }}</button>
     @if (loading()) { <p role="status">Validando credenciales…</p> }

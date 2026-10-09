@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../services/auth.service';
-import { errorMessage } from '../auth-form.util';
+import { errorMessage, passwordBytesValidos } from '../auth-form.util';
 
 @Component({
   selector: 'app-login', standalone: true, imports: [ReactiveFormsModule, RouterLink],
@@ -21,7 +21,7 @@ export class LoginComponent {
   readonly registered = this.route.snapshot.queryParamMap.get('registered') === '1';
   readonly form = inject(FormBuilder).nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]]
+    password: ['', [Validators.required, Validators.minLength(8), passwordBytesValidos]]
   });
   submit(): void {
     if (this.loading()) return;

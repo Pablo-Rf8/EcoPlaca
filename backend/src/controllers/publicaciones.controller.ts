@@ -4,18 +4,14 @@ import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
 import pool from '../config/database';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { CreateDispositivoDTO, Dispositivo, EstadoFuncional } from '../models/dispositivo.model';
+import { Dispositivo } from '../models/dispositivo.model';
 import { calculateAvoidedCo2 } from '../utils/carbonCalculator.util';
 import { sendError, sendSuccess } from '../utils/response.util';
+import { HttpError } from '../utils/crud.util';
+import { ValidatedDispositivoDTO, validarDispositivoDTO } from '../utils/dispositivo-validation.util';
 
 interface CategoriaRow extends RowDataPacket { id: number; codigo: string; nombre: string; factor_co2_kg?: string | number; }
 interface CentroRow extends RowDataPacket { id: number; nombre: string; ciudad: string; categoriaId: number; }
-function idValido(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
-}
-function textoOpcional(value: unknown, max: number): boolean {
-  return value === undefined || (typeof value === 'string' && value.trim().length <= max);
-}
 
 export async function opcionesPublicacion(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -31,18 +27,11 @@ export async function opcionesPublicacion(req: AuthRequest, res: Response, next:
 
 export async function crearDispositivo(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   if (!req.usuario) { sendError(res, 'Autenticación requerida', 401); return; }
-  const body: Partial<CreateDispositivoDTO> | null = req.body;
-  const estados: EstadoFuncional[] = ['OPERATIVO', 'REPARABLE', 'DESGUACE_RECICLAJE'];
-  if (!body || typeof body.titulo !== 'string' || body.titulo.trim().length < 3 || body.titulo.trim().length > 150
-      || !idValido(body.categoriaId) || !idValido(body.centroAcopioId)
-      || typeof body.pesoKg !== 'number' || !Number.isFinite(body.pesoKg) || body.pesoKg <= 0 || body.pesoKg > 9999.99
-      || Math.abs(body.pesoKg * 100 - Math.round(body.pesoKg * 100)) > 0.000001
-      || !body.estadoFuncional || !estados.includes(body.estadoFuncional)
-      || !textoOpcional(body.marca, 100) || !textoOpcional(body.modelo, 100)
-      || !textoOpcional(body.numeroSerie, 100) || !textoOpcional(body.notas, 5000)
-      || (body.especificaciones !== undefined && (typeof body.especificaciones !== 'object'
-        || body.especificaciones === null || Array.isArray(body.especificaciones)))) {
-    sendError(res, 'Datos inválidos: título de 3 a 150 caracteres, categoría, centro, condición y peso positivo con hasta 2 decimales', 400);
+  let body: ValidatedDispositivoDTO;
+  try { body = validarDispositivoDTO(req.body); }
+  catch (error: unknown) {
+    if (error instanceof HttpError) sendError(res, error.message, error.status);
+    else next(error);
     return;
   }
   let connection: PoolConnection | undefined;

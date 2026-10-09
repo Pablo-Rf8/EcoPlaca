@@ -52,13 +52,13 @@ export function text(body: Record<string, unknown>, key: string, max: number): s
   return value.trim();
 }
 export function optionalText(body: Record<string, unknown>, key: string, max: number): string | null {
-  if (body[key] === undefined || body[key] === null || body[key] === '') return null;
+  if (body[key] === undefined || body[key] === null || (typeof body[key] === 'string' && !body[key].trim())) return null;
   return text(body, key, max);
 }
 export function decimal(value: unknown, name: string, max: number): number {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0 || value > max
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0.01 || value > max
       || Math.abs(value * 100 - Math.round(value * 100)) > 0.000001) {
     throw new HttpError(`${name} debe ser positivo, máximo ${max} y tener hasta 2 decimales`, 400);
   }
-  return value;
+  return Math.round(value * 100) / 100;
 }

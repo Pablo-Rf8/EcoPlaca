@@ -65,4 +65,52 @@ describe('AuthService session lifecycle', () => {
     expect(active).toBeFalse();
     expect(localStorage.getItem('ecoplaca_token')).toBeNull();
   });
+  it('restores a replacement token while the old profile request is still pending', () => {
+    const oldToken = token(Math.floor(Date.now() / 1000) + 3600);
+    const nextToken = token(Math.floor(Date.now() / 1000) + 7200);
+    localStorage.setItem('ecoplaca_token', oldToken);
+    const auth = TestBed.inject(AuthService);
+    let oldActive = true;
+    auth.ensureSession().subscribe(value => { oldActive = value; });
+    const oldProfile = http.expectOne('/api/auth/perfil');
+
+    localStorage.setItem('ecoplaca_token', nextToken);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'ecoplaca_token', newValue: nextToken }));
+    const nextProfile = http.expectOne('/api/auth/perfil');
+    oldProfile.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(oldActive).toBeFalse();
+    expect(auth.getToken()).toBe(nextToken);
+
+    let nextActive = false;
+    auth.ensureSession().subscribe(value => { nextActive = value; });
+    http.expectNone('/api/auth/perfil');
+    nextProfile.flush({ success: true, data: {
+      id: 2, nombre_completo: 'Laura', email: 'laura@example.com', rol_nombre: 'TECHNICIAN',
+      telefono: null, direccion: null
+    } });
+    expect(nextActive).toBeTrue();
+    expect(auth.currentUser()?.id).toBe(2);
+  });
+  it('ignores an old profile that arrives after the replacement session is authenticated', () => {
+    localStorage.setItem('ecoplaca_token', token(Math.floor(Date.now() / 1000) + 3600));
+    const auth = TestBed.inject(AuthService);
+    let oldActive = true;
+    auth.ensureSession().subscribe(value => { oldActive = value; });
+    const oldProfile = http.expectOne('/api/auth/perfil');
+
+    const nextToken = token(Math.floor(Date.now() / 1000) + 7200);
+    localStorage.setItem('ecoplaca_token', nextToken);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'ecoplaca_token', newValue: nextToken }));
+    http.expectOne('/api/auth/perfil').flush({ success: true, data: {
+      id: 2, nombre_completo: 'Laura', email: 'laura@example.com', rol_nombre: 'TECHNICIAN',
+      telefono: null, direccion: null
+    } });
+    oldProfile.flush({ success: true, data: {
+      id: 1, nombre_completo: 'Ana', email: user.email, rol_nombre: 'DONOR',
+      telefono: null, direccion: null
+    } });
+    expect(auth.currentUser()?.id).toBe(2);
+    expect(oldActive).toBeFalse();
+    expect(auth.isAuthenticated()).toBeTrue();
+  });
 });

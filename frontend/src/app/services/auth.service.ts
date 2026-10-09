@@ -16,7 +16,7 @@ export class AuthService {
   readonly currentUser = this.user.asReadonly();
   readonly isAuthenticated = computed<boolean>(() => this.user() !== null && this.token() !== null);
   private expiryTimer: ReturnType<typeof setTimeout> | undefined;
-  private restoration: Observable<boolean> | undefined;
+  private restoration: { token: string; request: Observable<boolean> } | undefined;
 
   constructor() {
     const token = this.readToken();
@@ -86,17 +86,21 @@ export class AuthService {
   }
 
   ensureSession(): Observable<boolean> {
-    if (!this.getToken()) return of(false);
+    const token = this.getToken();
+    if (!token) return of(false);
     if (this.currentUser()) return of(true);
-    if (!this.restoration) {
-      this.restoration = this.getProfile().pipe(
-        map((): boolean => this.isAuthenticated()),
+    if (!this.restoration || this.restoration.token !== token) {
+      const request = this.getProfile().pipe(
+        map((): boolean => token === this.getToken() && this.isAuthenticated()),
         catchError((): Observable<boolean> => of(false)),
-        finalize((): void => { this.restoration = undefined; }),
+        finalize((): void => {
+          if (this.restoration?.request === request) this.restoration = undefined;
+        }),
         shareReplay({ bufferSize: 1, refCount: false })
       );
+      this.restoration = { token, request };
     }
-    return this.restoration;
+    return this.restoration.request;
   }
 
   hasRole(roles: string[]): boolean {
@@ -138,6 +142,7 @@ export class AuthService {
     this.expiryTimer = undefined;
     this.user.set(null);
     this.token.set(null);
+    this.restoration = undefined;
   }
   private clearSession(): void {
     this.clearMemory();

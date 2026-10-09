@@ -36,10 +36,12 @@ describe('Hardware publication form', () => {
       expect(component.form.controls.titulo.invalid).toBeTrue();
     }
     component.form.controls.titulo.setValue('Procesador');
-    for (const weight of [0, -1, 0.001, 10000]) {
+    for (const weight of [0, -1, 0.001, 1e-9, 10000]) {
       component.form.controls.pesoKg.setValue(weight);
       component.submit(); http.expectNone('/api/dispositivos');
     }
+    component.form.controls.pesoKg.setValue(0.01);
+    expect(component.form.controls.pesoKg.valid).toBeTrue();
   });
   it('selects a sole compatible centre and clears the selection when multiple or no centres are available', () => {
     validForm();

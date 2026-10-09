@@ -26,9 +26,9 @@
       <button type="button" class="password-toggle" (click)="passwordVisible.set(!passwordVisible())"
         [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}</button>
     </div>
-    <small class="hint" id="register-password-help">Usa entre 8 y 72 caracteres.</small>
+    <small class="hint" id="register-password-help">Usa entre 8 y 72 caracteres. Los acentos y emojis pueden reducir el máximo.</small>
     @if (form.controls.password.touched && form.controls.password.invalid) {
-      <small class="error" id="register-password-error">La contraseña debe tener entre 8 y 72 caracteres.</small>
+      <small class="error" id="register-password-error">Usa entre 8 y 72 caracteres; acorta la contraseña si contiene muchos acentos o emojis.</small>
     }
     <label for="register-role">Tipo de cuenta</label>
     <select id="register-role" formControlName="rolId" required

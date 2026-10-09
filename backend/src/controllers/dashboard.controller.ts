@@ -2,25 +2,24 @@ import { NextFunction, Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2';
 import pool from '../config/database';
 import { EstadoTransferencia } from '../models/transferencia.model';
-import { calculateAvoidedCo2 } from '../utils/carbonCalculator.util';
 import { sendSuccess } from '../utils/response.util';
 
 interface MetricaRow extends RowDataPacket {
   tipo: 'RAEE' | 'TRANSFERENCIA';
   clave: string;
   valor: string | number;
-  factorCo2: string | number | null;
+  co2EvitadoKg: string | number | null;
 }
 
 export async function getMetricas(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     // Una sola sentencia obtiene métricas coherentes sin multiplicar pesos por órdenes.
     const [rows] = await pool.execute<MetricaRow[]>(
-      `SELECT 'RAEE' AS tipo, c.codigo AS clave, SUM(d.peso_kg) AS valor, c.factor_co2_kg AS factorCo2
+      `SELECT 'RAEE' AS tipo, c.codigo AS clave, SUM(d.peso_kg) AS valor, SUM(d.co2_evitado_kg) AS co2EvitadoKg
        FROM dispositivos d JOIN categorias_raee c ON c.id = d.categoria_id
-       WHERE d.estado_disponibilidad IN ('ENTREGADO', 'RECICLADO') GROUP BY c.id, c.codigo, c.factor_co2_kg
+       WHERE d.estado_disponibilidad IN ('ENTREGADO', 'RECICLADO') GROUP BY c.id, c.codigo
        UNION ALL
-       SELECT 'TRANSFERENCIA' AS tipo, estado AS clave, COUNT(*) AS valor, NULL AS factorCo2
+       SELECT 'TRANSFERENCIA' AS tipo, estado AS clave, COUNT(*) AS valor, NULL AS co2EvitadoKg
        FROM ordenes_transferencia GROUP BY estado`
     );
     let totalKgRecuperados: number = 0;
@@ -32,7 +31,7 @@ export async function getMetricas(req: Request, res: Response, next: NextFunctio
       const value: number = Number(row.valor);
       if (row.tipo === 'RAEE') {
         totalKgRecuperados += value;
-        co2EvitadoKg += calculateAvoidedCo2(value, row.clave.replace(/^RAEE-/, 'CAT-'), row.factorCo2 === null ? undefined : Number(row.factorCo2));
+        co2EvitadoKg += Number(row.co2EvitadoKg);
       } else if (Object.prototype.hasOwnProperty.call(transferenciasPorEstado, row.clave)) {
         transferenciasPorEstado[row.clave as EstadoTransferencia] = value;
       }

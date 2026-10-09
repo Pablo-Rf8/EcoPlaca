@@ -5,6 +5,8 @@
     "main":  "dist/server.js",
     "scripts":  {
                     "dev":  "ts-node-dev --respawn --transpile-only src/server.ts",
+                    "test": "node scripts/test.cjs",
+                    "test:integration": "node scripts/test.cjs --integration",
                     "build":  "rimraf dist \u0026\u0026 tsc",
                     "start":  "node dist/server.js",
                     "db:migrate":  "node dist/scripts/migrate.js",

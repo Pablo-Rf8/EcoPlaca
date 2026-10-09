@@ -22,8 +22,18 @@ export function allowedOrigins(): string[] {
   }
   return origins;
 }
+export function jwtExpiresInSeconds(): number {
+  const configured: string = process.env.JWT_EXPIRES_IN ?? '7d';
+  const match = /^([1-9]\d*)([smhdw]?)$/.exec(configured.trim());
+  if (!match) throw new Error('JWT_EXPIRES_IN debe ser un entero positivo en segundos o usar s, m, h, d o w');
+  const units: Record<string, number> = { '': 1, s: 1, m: 60, h: 3600, d: 86400, w: 604800 };
+  const seconds: number = Number(match[1]) * units[match[2]];
+  if (!Number.isSafeInteger(seconds) || seconds <= 0) throw new Error('JWT_EXPIRES_IN supera el rango de segundos permitido');
+  return seconds;
+}
 export function validateRuntimeEnvironment(): void {
   const secret = requiredEnv('JWT_SECRET');
   if (process.env.NODE_ENV === 'production' && secret.length < 32) throw new Error('JWT_SECRET debe tener al menos 32 caracteres en producción');
   allowedOrigins();
+  jwtExpiresInSeconds();
 }

@@ -156,7 +156,7 @@ Para generar una clave JWT:
 node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 ```
 
-Copiar el resultado en `JWT_SECRET`. El login actual emite tokens con duración de siete días. `JWT_EXPIRES_IN` aparece en la plantilla, pero el controlador todavía fija esa duración en el código.
+Copiar el resultado en `JWT_SECRET`. `JWT_EXPIRES_IN` configura la duración del token: acepta segundos enteros positivos (por ejemplo, `900`) o un entero positivo con unidad `s`, `m`, `h`, `d` o `w` (por ejemplo, `15m`). Si se omite, usa `7d`. Los valores vacíos, ambiguos o fuera del rango de enteros seguros impiden arrancar el backend.
 
 Las variables `SEED_ADMIN_*` crean un ADMIN opcional. Las tres variables `SEED_CENTRO_*` crean un centro inicial opcional, asociado a las categorías del seed. Para omitirlo, deja las tres vacías. El archivo `.env` está excluido de Git.
 
@@ -217,35 +217,54 @@ Rutas principales: `/catalogo`, `/login`, `/register`, `/nuevo-dispositivo`, `/t
 
 ## Ejecución de pruebas automatizadas
 
-Última validación registrada (9 de octubre de 2026): **49 pruebas aprobadas**, distribuidas en 18 de backend y 31 de Angular.
+Última validación registrada (9 de octubre de 2026): **72 pruebas unitarias aprobadas**, distribuidas en 36 de backend y 36 de Angular. También pasaron **14 casos de integración con MySQL real** (15 pruebas contando el grupo del runner).
 
-### Backend: 18 pruebas
-
-Desde `backend/`:
+Desde la raíz, ejecutar ambas suites unitarias:
 
 ```sh
-node -r ../node_modules/ts-node/register --test tests/tarea5.test.ts tests/tarea6.test.ts
+npm test
 ```
 
-Verifican publicación, propiedad del dispositivo, aislamiento de órdenes por técnico, CRUD, conflictos, relaciones, CORS y repetición de migración/seed.
+### Backend: 36 pruebas
 
-### Angular: 31 pruebas
-
-Desde `frontend/`:
+Desde la raíz:
 
 ```sh
-node ./node_modules/@angular/cli/bin/ng.js test --watch=false --browsers=ChromeHeadless
+npm run test:backend
 ```
 
-También se puede utilizar el script npm:
+Verifican publicación, propiedad del dispositivo, aislamiento de órdenes por técnico, CRUD, conflictos, relaciones, CORS, repetición de migración/seed, precisión decimal, CO₂, duración JWT y errores concurrentes. El runner configura variables de prueba y usa MySQL simulado; esta suite no requiere una base ni un `.env` local. La integración se omite en esta ejecución.
+
+### Angular: 36 pruebas
+
+Desde la raíz:
 
 ```sh
-npm test -- --watch=false --browsers=ChromeHeadless
+npm run test:frontend
 ```
 
-Verifican sesión, guards, alcance del JWT, filtros, reservas, métricas, publicación, recepción física y navegación por teclado. Chrome debe estar instalado; si no se detecta, configurar `CHROME_BIN` con la ruta del ejecutable. También se puede usar Microsoft Edge basado en Chromium; la última validación utilizó Edge en modo headless.
+El runner usa ChromeHeadless. En Windows detecta Chrome o Edge instalado; en otros sistemas se puede configurar `CHROME_BIN`. Para especificar un ejecutable en PowerShell:
 
-Las pruebas usan HTTP/MySQL simulados; las 49 pruebas no representan una validación contra una base real ni un despliegue. El recorrido manual está en `backend/api.http`.
+```powershell
+$env:CHROME_BIN = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+npm run test:frontend
+```
+
+Verifican sesión, guards, alcance del JWT, filtros, reservas, métricas, publicación, recepción física, navegación por teclado, cambios de sesión entre pestañas y límites de contraseña en bytes UTF-8. La última validación utilizó Edge en modo headless.
+
+Las suites unitarias usan HTTP/MySQL simulados. El recorrido manual está en `backend/api.http`.
+
+### Integración con MySQL real
+
+Iniciar la API con un `.env` que apunte a una base exclusiva para pruebas: `DB_NAME=ecoplaca_qa` o un nombre terminado en `_test`, y `DB_HOST` local. Preparar esa base mediante migración/seed y configurar `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` para una cuenta ADMIN de prueba. `API_URL` permite indicar el origen de la API; su valor predeterminado es `http://127.0.0.1:3000` y solo admite localhost.
+
+Desde la raíz, con la API ya iniciada:
+
+```sh
+npm run test:integration
+```
+
+Esta suite comprueba registro, login, permisos, CRUD, centros, reservas y recepciones simultáneas, CO₂, fechas y un deadlock controlado con rollback. Crea datos sintéticos únicos y los conserva para inspección; no reinicializa la base ni elimina registros anteriores. La validación registrada usó MySQL 8.0.34 local, además de un recorrido real en navegador de publicación, reserva, entrega y consulta de métricas.
 
 La compilación de producción también se revisó en Edge a 320, 768 y 1440 px: 33 escenarios de pantallas, menús, diálogos y validación de formularios, sin desbordamientos ni errores de JavaScript. Esta revisión utiliza datos simulados en el navegador.
 
@@ -258,6 +277,8 @@ npm run build
 ```
 
 Compila backend y frontend. Los resultados se generan en `backend/dist/` y `frontend/dist/frontend/browser/`.
+
+Las optimizaciones de JavaScript y CSS permanecen activas. La compilación no descarga Google Fonts: la fuente se carga desde el navegador y conserva las fuentes alternativas del CSS cuando no está disponible.
 
 ## Catálogo de endpoints de la API
 
@@ -329,7 +350,7 @@ Campos: `codigo`, `nombre`, `descripcion` opcional y `factorCo2Kg`. Los códigos
 | PUT | /centros/:id | ADMIN | Actualizar datos y categorías admitidas. |
 | PATCH | /centros/:id/desactivar | ADMIN | Cambiar activo a false conservando el historial. |
 
-Campos: `nombre`, `direccion`, `ciudad`, `telefono` opcional, `capacidadKg` y `categoriasIds`. No se permite retirar categorías de hardware disponible o reservado ubicado en el centro.
+Campos: `nombre`, `direccion`, `ciudad`, `telefono` opcional, `capacidadKg` y `categoriasIds`. No se permite retirar categorías de hardware disponible o reservado ubicado en el centro, ni categorías necesarias para transferencias activas hacia él. Desactivar un centro con transferencias activas de origen o destino devuelve conflicto `409`.
 
 La salud de la API se consulta mediante `GET /api/health`, sin autenticación. Las peticiones completas y los casos de error están en `backend/api.http`.
 
@@ -451,4 +472,4 @@ El frontend usa `API_URL = '/api'`. Para alojar la API en otro origen, proporcio
 
 Consultar `/api/health`, iniciar sesión, publicar hardware nuevo, reservarlo, confirmar su entrega y verificar el dashboard. Ejecutar las pruebas en la etapa de integración antes de publicar.
 
-La verificación registrada del proyecto incluye builds y pruebas con dependencias simuladas. El despliegue y la conexión a una base MySQL real deben verificarse en el entorno de destino.
+La verificación registrada incluye builds, pruebas unitarias, integración contra una instancia MySQL local aislada y un recorrido real en navegador. El despliegue debe verificarse en el entorno de destino.
