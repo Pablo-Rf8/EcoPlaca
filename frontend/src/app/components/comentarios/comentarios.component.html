@@ -1,49 +1,77 @@
-<section class="comentarios-section">
-  <div class="comentarios-header">
-    <h2>Bitácora de Comentarios y Notas Técnicas</h2>
+<section class="comentarios-section" aria-labelledby="comentarios-titulo">
+  <header class="comentarios-header">
+    <h1 id="comentarios-titulo">Bitácora de comentarios y notas técnicas</h1>
     <p>Historial de retroalimentación, notas de recepción y diagnósticos de dispositivos RAEE.</p>
-  </div>
+  </header>
+
+  <p class="aviso-demostracion" id="aviso-demostracion">
+    <strong>Vista de demostración.</strong> Incluye notas de ejemplo. Las notas que añadas aquí solo se mantienen mientras esta página esté abierta.
+  </p>
 
   <div class="nuevo-comentario-card">
-    <h3>Registrar Nota Técnica</h3>
-    <div class="formulario-comentario">
+    <h2>Añadir una nota técnica</h2>
+    <form class="formulario-comentario" #formulario="ngForm" (ngSubmit)="agregarComentario(formulario)" novalidate aria-describedby="aviso-demostracion">
       <div class="campo-grupo">
-        <label for="dispositivoCodigo">Código de Dispositivo:</label>
+        <label for="dispositivoCodigo">Código de dispositivo</label>
         <input 
           id="dispositivoCodigo" 
+          name="dispositivoCodigo"
           type="text" 
           [(ngModel)]="codigoDispositivo" 
+          (ngModelChange)="estado.set('')"
+          #codigo="ngModel"
+          required
+          maxlength="80"
+          [attr.aria-invalid]="(codigo.touched || formulario.submitted) && !codigoDispositivo.trim()"
+          [attr.aria-describedby]="(codigo.touched || formulario.submitted) && !codigoDispositivo.trim() ? 'codigo-error' : null"
           placeholder="Ej. RAEE-2026-0001" 
         />
+        @if ((codigo.touched || formulario.submitted) && !codigoDispositivo.trim()) {
+          <p class="campo-error" id="codigo-error" role="alert">Introduce el código del dispositivo.</p>
+        }
       </div>
       <div class="campo-grupo">
-        <label for="comentarioTexto">Observación / Diagnóstico:</label>
+        <label for="comentarioTexto">Observación o diagnóstico</label>
         <textarea 
           id="comentarioTexto" 
-          rows="3" 
+          name="comentarioTexto"
+          rows="4"
           [(ngModel)]="nuevoComentario" 
-          placeholder="Describe el estado de la pieza o detalles de entrega..."
+          (ngModelChange)="estado.set('')"
+          #observacion="ngModel"
+          required
+          maxlength="2000"
+          [attr.aria-invalid]="(observacion.touched || formulario.submitted) && !nuevoComentario.trim()"
+          [attr.aria-describedby]="(observacion.touched || formulario.submitted) && !nuevoComentario.trim() ? 'comentario-ayuda comentario-error' : 'comentario-ayuda'"
+          placeholder="Describe el estado de la pieza o los detalles de entrega..."
         ></textarea>
+        <p class="campo-ayuda" id="comentario-ayuda">Hasta 2,000 caracteres.</p>
+        @if ((observacion.touched || formulario.submitted) && !nuevoComentario.trim()) {
+          <p class="campo-error" id="comentario-error" role="alert">Escribe una observación o un diagnóstico.</p>
+        }
       </div>
-      <button class="btn-publicar" (click)="agregarComentario()">Publicar Nota</button>
-    </div>
+      <button class="btn-publicar" type="submit">Añadir nota a la vista</button>
+      <div class="formulario-estado" aria-live="polite" aria-atomic="true">
+        @if (estado()) {
+          <p>{{ estado() }}</p>
+        }
+      </div>
+    </form>
   </div>
 
-  <div class="lista-comentarios">
+  <section class="lista-comentarios" aria-label="Notas técnicas">
     @for (c of comentarios(); track c.id) {
-      <div class="comentario-item">
+      <article class="comentario-item">
         <div class="comentario-top">
           <div class="autor-info">
             <span class="autor-nombre">{{ c.autor }}</span>
             <span class="autor-rol">{{ c.rol }}</span>
           </div>
-          <div class="dispositivo-tag">
-            <span>{{ c.dispositivoCodigo }}</span>
-          </div>
+          <span class="dispositivo-tag">{{ c.dispositivoCodigo }}</span>
         </div>
         <p class="comentario-contenido">{{ c.contenido }}</p>
         <span class="comentario-fecha">{{ c.fecha }}</span>
-      </div>
+      </article>
     }
-  </div>
+  </section>
 </section>

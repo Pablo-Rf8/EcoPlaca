@@ -1,6 +1,6 @@
 <section class="dashboard">
   <header><div><h1>Impacto ambiental</h1><p>Resultados reales del hardware recuperado.</p></div>
-    <button (click)="actualizar()" [disabled]="cargando()">Actualizar métricas</button></header>
+    <button type="button" (click)="actualizar()" [disabled]="cargando()">Actualizar métricas</button></header>
   @if (cargando()) { <p role="status"><span class="spinner" aria-hidden="true"></span> Actualizando métricas…</p> }
   @if (error()) { <p class="error" role="alert">{{ error() }} Usa “Actualizar métricas” para reintentar.</p> }
   @if (metricas(); as m) {
@@ -9,7 +9,7 @@
       <article><p>CO₂ equivalente evitado</p><strong>{{ m.co2EvitadoKg | number:'1.2-2' }} <span>kg</span></strong><small>Estimación según la categoría del hardware</small></article>
       <article><p>Transferencias activas y completadas</p><strong>{{ totalTransferencias() | number:'1.0-0' }}</strong><small>{{ activas() }} activas · {{ completadas() }} completadas</small></article>
     </div>
-    <p class="actualizado">Última actualización: {{ actualizado() | date:'short' }}. Consulta automática cada 30 segundos.</p>
+    <p class="actualizado">Última actualización: {{ actualizado() | date:'dd/MM/yyyy, HH:mm' }}. Consulta automática cada 30 segundos.</p>
     @if (error()) { <p>Se muestran los últimos datos obtenidos correctamente.</p> }
   }
 </section>

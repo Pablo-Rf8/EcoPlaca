@@ -217,7 +217,7 @@ Rutas principales: `/catalogo`, `/login`, `/register`, `/nuevo-dispositivo`, `/t
 
 ## Ejecución de pruebas automatizadas
 
-Última validación registrada: **44 pruebas aprobadas**, distribuidas en 18 de backend y 26 de Angular.
+Última validación registrada (9 de octubre de 2026): **49 pruebas aprobadas**, distribuidas en 18 de backend y 31 de Angular.
 
 ### Backend: 18 pruebas
 
@@ -229,7 +229,7 @@ node -r ../node_modules/ts-node/register --test tests/tarea5.test.ts tests/tarea
 
 Verifican publicación, propiedad del dispositivo, aislamiento de órdenes por técnico, CRUD, conflictos, relaciones, CORS y repetición de migración/seed.
 
-### Angular: 26 pruebas
+### Angular: 31 pruebas
 
 Desde `frontend/`:
 
@@ -243,9 +243,11 @@ También se puede utilizar el script npm:
 npm test -- --watch=false --browsers=ChromeHeadless
 ```
 
-Verifican sesión, guards, alcance del JWT, filtros, reservas, métricas, publicación y recepción física. Chrome debe estar instalado; si no se detecta, configurar `CHROME_BIN` con la ruta del ejecutable.
+Verifican sesión, guards, alcance del JWT, filtros, reservas, métricas, publicación, recepción física y navegación por teclado. Chrome debe estar instalado; si no se detecta, configurar `CHROME_BIN` con la ruta del ejecutable. También se puede usar Microsoft Edge basado en Chromium; la última validación utilizó Edge en modo headless.
 
-Las pruebas usan HTTP/MySQL simulados; las 44 pruebas no representan una validación contra una base real ni un despliegue. El recorrido manual está en `backend/api.http`.
+Las pruebas usan HTTP/MySQL simulados; las 49 pruebas no representan una validación contra una base real ni un despliegue. El recorrido manual está en `backend/api.http`.
+
+La compilación de producción también se revisó en Edge a 320, 768 y 1440 px: 33 escenarios de pantallas, menús, diálogos y validación de formularios, sin desbordamientos ni errores de JavaScript. Esta revisión utiliza datos simulados en el navegador.
 
 ### Comprobar compilación
 

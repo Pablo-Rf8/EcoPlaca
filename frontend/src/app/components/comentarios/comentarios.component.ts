@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 
 export interface ComentarioItem {
   id: number;
@@ -21,6 +21,7 @@ export interface ComentarioItem {
 export class ComentariosComponent {
   nuevoComentario = '';
   codigoDispositivo = 'RAEE-2026-0001';
+  estado = signal('');
 
   comentarios = signal<ComentarioItem[]>([
     {
@@ -41,19 +42,24 @@ export class ComentariosComponent {
     }
   ]);
 
-  agregarComentario(): void {
-    if (!this.nuevoComentario.trim()) return;
+  agregarComentario(formulario?: NgForm): void {
+    const codigo = this.codigoDispositivo.trim();
+    const contenido = this.nuevoComentario.trim();
+    if (!codigo || !contenido) return;
 
     const nuevo: ComentarioItem = {
       id: Date.now(),
       autor: 'Taller Técnico Re-Boot',
       rol: 'Técnico',
-      dispositivoCodigo: this.codigoDispositivo,
-      contenido: this.nuevoComentario.trim(),
-      fecha: new Date().toLocaleString()
+      dispositivoCodigo: codigo,
+      contenido,
+      fecha: new Date().toLocaleString('es-GT')
     };
 
     this.comentarios.update(list => [nuevo, ...list]);
+    this.codigoDispositivo = codigo;
     this.nuevoComentario = '';
+    formulario?.resetForm({ dispositivoCodigo: codigo, comentarioTexto: '' });
+    this.estado.set('Nota añadida a esta vista. Se eliminará al salir o recargar la página.');
   }
 }

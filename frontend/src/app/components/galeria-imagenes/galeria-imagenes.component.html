@@ -4,25 +4,32 @@
     <label>Buscar<input type="search" formControlName="busqueda" placeholder="Título, marca o código"></label>
     <label>Estado<select formControlName="estado">
       <option value="">Todos</option><option value="DISPONIBLE">Disponible</option>
-      <option value="RESERVADO">Reservado</option><option value="ENTREGADO">Entregado</option>
+      <option value="RESERVADO">Reservado</option><option value="ASIGNADO">Asignado</option>
+      <option value="ENTREGADO">Entregado</option><option value="RECICLADO">Reciclado</option>
     </select></label>
     <label>Condición<select formControlName="estadoFuncional">
       <option value="">Todas</option><option value="OPERATIVO">Operativo</option>
       <option value="REPARABLE">Repuestos</option><option value="DESGUACE_RECICLAJE">Chatarra</option>
     </select></label>
   </form>
+  <div class="resultados">
+    <p role="status">@if (!cargando() && !error()) { {{ dispositivos().length }} {{ dispositivos().length === 1 ? 'dispositivo encontrado' : 'dispositivos encontrados' }} }</p>
+    @if (filtros.controls.busqueda.value || filtros.controls.estado.value || filtros.controls.estadoFuncional.value) {
+      <button type="button" class="limpiar" (click)="limpiarFiltros()">Limpiar filtros</button>
+    }
+  </div>
   @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
   @if (cargando()) {
     <div class="estado" role="status"><span class="spinner" aria-hidden="true"></span> Cargando dispositivos…</div>
   } @else if (error()) {
     <div class="estado error" role="alert"><p>{{ error() }}</p><button (click)="reintentar()">Reintentar</button></div>
   } @else if (dispositivos().length === 0) {
-    <p class="estado">No hay dispositivos con estos filtros</p>
+    <div class="estado"><h2>No hay dispositivos con estos filtros</h2><p>Prueba con otra búsqueda o cambia el estado y la condición.</p></div>
   } @else {
     <div class="grid">
       @for (d of dispositivos(); track d.id) {
         <article class="card">
-          <div class="badges"><span>{{ d.codigoTrazabilidad }}</span><strong [class.reservado]="d.estadoDisponibilidad === 'RESERVADO'">{{ d.estadoDisponibilidad }}</strong></div>
+          <div class="badges"><span>{{ d.codigoTrazabilidad }}</span><strong [attr.data-estado]="d.estadoDisponibilidad">{{ disponibilidad(d.estadoDisponibilidad) }}</strong></div>
           <div class="ilustracion" aria-hidden="true">♻</div>
           <p class="categoria">{{ d.categoriaNombre || 'Hardware RAEE' }}</p>
           <h2>{{ d.titulo }}</h2>
@@ -31,7 +38,7 @@
             <dt>Peso</dt><dd>{{ d.pesoKg | number:'1.2-2' }} kg</dd>
             <dt>CO₂ potencial evitado</dt><dd>{{ d.co2EvitadoKg | number:'1.2-2' }} kg</dd>
           </dl>
-          @if (d.notas) { <p>{{ d.notas }}</p> }
+          @if (d.notas) { <p class="notas">{{ d.notas }}</p> }
           <footer><p>{{ d.centroAcopioNombre || 'Centro sin asignar' }}</p>
             @if (auth.hasRole(['TECHNICIAN'])) {
               <button (click)="abrirReserva(d)" [disabled]="d.estadoDisponibilidad !== 'DISPONIBLE' || reservando()">
@@ -50,7 +57,9 @@
   @if (errorReserva()) { <p class="error" role="alert">{{ errorReserva() }}</p> }
   <form [formGroup]="reservaForm" (ngSubmit)="confirmarReserva()" [attr.aria-busy]="reservando()">
     <label for="motivo">Motivo de la solicitud</label>
-    <textarea id="motivo" formControlName="motivo" rows="4" maxlength="255" aria-describedby="motivo-error" autofocus></textarea>
+    <textarea id="motivo" formControlName="motivo" rows="4" maxlength="255"
+      [attr.aria-invalid]="reservaForm.controls.motivo.touched && reservaForm.controls.motivo.invalid"
+      [attr.aria-describedby]="reservaForm.controls.motivo.touched && reservaForm.controls.motivo.invalid ? 'motivo-error' : null" autofocus></textarea>
     @if (reservaForm.controls.motivo.touched && reservaForm.controls.motivo.invalid) {
       <small id="motivo-error" class="error">Escribe un motivo de 1 a 255 caracteres.</small>
     }

@@ -15,6 +15,7 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly loading = signal<boolean>(false);
+  readonly passwordVisible = signal<boolean>(false);
   readonly error = signal<string | null>(null);
   readonly form = inject(FormBuilder).nonNullable.group({
     nombreCompleto: ['', [nonBlank, Validators.minLength(2), Validators.maxLength(150)]],

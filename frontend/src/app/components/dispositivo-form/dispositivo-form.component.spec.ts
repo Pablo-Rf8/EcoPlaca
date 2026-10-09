@@ -16,7 +16,9 @@ describe('Hardware publication form', () => {
     fixture = TestBed.createComponent(DispositivoFormComponent);
     component = fixture.componentInstance; fixture.detectChanges();
     http.expectOne('/api/dispositivos/opciones-publicacion').flush({ success: true, data: {
-      categorias: [{ id: 4, codigo: 'RAEE-CPU', nombre: 'CPU' }],
+      categorias: [{ id: 4, codigo: 'RAEE-CPU', nombre: 'CPU' },
+        { id: 2, codigo: 'RAEE-PCB', nombre: 'Placas' },
+        { id: 5, codigo: 'RAEE-MON', nombre: 'Pantallas' }],
       centros: [{ id: 1, nombre: 'Central', ciudad: 'Guatemala', categoriaId: 4 },
         { id: 2, nombre: 'Otro', ciudad: 'Guatemala', categoriaId: 2 }]
     } });
@@ -39,12 +41,23 @@ describe('Hardware publication form', () => {
       component.submit(); http.expectNone('/api/dispositivos');
     }
   });
-  it('only offers centres compatible with the selected category and resets centre on change', () => {
+  it('selects a sole compatible centre and clears the selection when multiple or no centres are available', () => {
     validForm();
     expect(component.centrosDisponibles().map(c => c.id)).toEqual([1]);
     component.form.controls.categoriaId.setValue(2);
-    expect(component.form.controls.centroAcopioId.value).toBe(0);
+    expect(component.form.controls.centroAcopioId.value).toBe(2);
     expect(component.centrosDisponibles().map(c => c.id)).toEqual([2]);
+
+    component.centros.update(centres => [...centres,
+      { id: 3, nombre: 'Alterno', ciudad: 'Guatemala', categoriaId: 4 }]);
+    component.form.controls.categoriaId.setValue(4);
+    expect(component.form.controls.centroAcopioId.value).toBe(0);
+    expect(component.centrosDisponibles().map(c => c.id)).toEqual([1, 3]);
+
+    component.form.controls.centroAcopioId.setValue(3);
+    component.form.controls.categoriaId.setValue(5);
+    expect(component.form.controls.centroAcopioId.value).toBe(0);
+    expect(component.centrosDisponibles()).toEqual([]);
   });
   it('publishes once, sends no donor spoofing field and redirects with feedback', () => {
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);

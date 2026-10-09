@@ -1,31 +1,47 @@
-<section class="auth-card">
-  <h1>Crear cuenta</h1>
+<section class="auth-card" aria-labelledby="register-title">
+  <p class="eyebrow">Únete a EcoPlaca</p>
+  <h1 id="register-title">Crear cuenta</h1>
+  <p class="intro">Conecta con quienes donan y recuperan hardware.</p>
   @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
   <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="loading()">
     <label for="register-name">Nombre completo</label>
-    <input id="register-name" formControlName="nombreCompleto" autocomplete="name" aria-describedby="register-name-error">
+    <input id="register-name" formControlName="nombreCompleto" autocomplete="name" required minlength="2" maxlength="150"
+      [attr.aria-invalid]="form.controls.nombreCompleto.touched && form.controls.nombreCompleto.invalid"
+      [attr.aria-describedby]="form.controls.nombreCompleto.touched && form.controls.nombreCompleto.invalid ? 'register-name-error' : null">
     @if (form.controls.nombreCompleto.touched && form.controls.nombreCompleto.invalid) {
       <small class="error" id="register-name-error">Ingresa un nombre de 2 a 150 caracteres.</small>
     }
     <label for="register-email">Correo electrónico</label>
-    <input id="register-email" type="email" formControlName="email" autocomplete="email" aria-describedby="register-email-error">
+    <input id="register-email" type="email" formControlName="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="150"
+      [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+      [attr.aria-describedby]="form.controls.email.touched && form.controls.email.invalid ? 'register-email-error' : null">
     @if (form.controls.email.touched && form.controls.email.invalid) {
       <small class="error" id="register-email-error">Ingresa un correo válido de hasta 150 caracteres.</small>
     }
     <label for="register-password">Contraseña</label>
-    <input id="register-password" type="password" formControlName="password" autocomplete="new-password" aria-describedby="register-password-error">
+    <div class="password-field">
+      <input id="register-password" [type]="passwordVisible() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" required minlength="8" maxlength="72"
+        [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+        [attr.aria-describedby]="form.controls.password.touched && form.controls.password.invalid ? 'register-password-help register-password-error' : 'register-password-help'">
+      <button type="button" class="password-toggle" (click)="passwordVisible.set(!passwordVisible())"
+        [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}</button>
+    </div>
+    <small class="hint" id="register-password-help">Usa entre 8 y 72 caracteres.</small>
     @if (form.controls.password.touched && form.controls.password.invalid) {
       <small class="error" id="register-password-error">La contraseña debe tener entre 8 y 72 caracteres.</small>
     }
     <label for="register-role">Tipo de cuenta</label>
-    <select id="register-role" formControlName="rolId" aria-describedby="register-role-error">
+    <select id="register-role" formControlName="rolId" required
+      [attr.aria-invalid]="form.controls.rolId.touched && form.controls.rolId.invalid"
+      [attr.aria-describedby]="form.controls.rolId.touched && form.controls.rolId.invalid ? 'register-role-help register-role-error' : 'register-role-help'">
       <option [ngValue]="2">Donante</option><option [ngValue]="3">Técnico</option>
     </select>
+    <small class="hint" id="register-role-help">Donante: publica hardware. Técnico: recibe y recupera equipos.</small>
     @if (form.controls.rolId.touched && form.controls.rolId.invalid) {
       <small class="error" id="register-role-error">Selecciona Donante o Técnico.</small>
     }
-    <button type="submit" [disabled]="loading()">{{ loading() ? 'Registrando…' : 'Crear cuenta' }}</button>
+    <button class="submit-button" type="submit" [disabled]="loading()">{{ loading() ? 'Registrando…' : 'Crear cuenta' }}</button>
     @if (loading()) { <p role="status">Creando tu cuenta…</p> }
   </form>
-  <p>¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
+  <p class="auth-footer">¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a></p>
 </section>

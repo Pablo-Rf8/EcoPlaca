@@ -1,9 +1,10 @@
 <div class="eco-app-layout">
+  <a class="skip-link" href="#main-content" (click)="skipToContent($event, mainContent)">Saltar al contenido</a>
   <app-navbar></app-navbar>
-  <main class="main-content">
+  <main #mainContent id="main-content" class="main-content" tabindex="-1">
     @if (notifications.message()) {
-      <div role="alert" style="padding:1rem;background:#fff3cd;color:#1B4965">
-        {{ notifications.message() }}
+      <div class="notification" role="alert">
+        <span>{{ notifications.message() }}</span>
         <button type="button" (click)="notifications.dismiss()">Cerrar aviso</button>
       </div>
     }

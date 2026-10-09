@@ -60,6 +60,14 @@ export class GaleriaImagenesComponent implements OnInit {
   }
 
   reintentar(): void { this.refresh.next(); }
+  limpiarFiltros(): void { this.filtros.reset(); }
+  disponibilidad(estado: EstadoDisponibilidad): string {
+    const labels: Record<EstadoDisponibilidad, string> = {
+      DISPONIBLE: 'Disponible', RESERVADO: 'Reservado', ASIGNADO: 'Asignado',
+      ENTREGADO: 'Entregado', RECICLADO: 'Reciclado'
+    };
+    return labels[estado];
+  }
   condicion(estado: EstadoFuncional): string {
     const labels: Record<EstadoFuncional, string> = {
       OPERATIVO: 'Operativo', REPARABLE: 'Repuestos / reparable', DESGUACE_RECICLAJE: 'Chatarra / reciclaje'

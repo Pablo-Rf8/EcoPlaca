@@ -9,4 +9,9 @@ import { NotificationService } from './services/notification.service';
 export class AppComponent {
   readonly title: string = 'EcoPlaca';
   readonly notifications = inject(NotificationService);
+  skipToContent(event: Event, content: HTMLElement): void {
+    event.preventDefault();
+    content.focus();
+    content.scrollIntoView({ block: 'start' });
+  }
 }

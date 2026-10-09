@@ -16,6 +16,7 @@ export class LoginComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   readonly loading = signal<boolean>(false);
+  readonly passwordVisible = signal<boolean>(false);
   readonly error = signal<string | null>(null);
   readonly registered = this.route.snapshot.queryParamMap.get('registered') === '1';
   readonly form = inject(FormBuilder).nonNullable.group({

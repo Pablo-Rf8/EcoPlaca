@@ -1,31 +1,32 @@
 <header class="eco-navbar-wrapper"><div class="eco-nav-container">
   <a routerLink="/catalogo" class="eco-brand" (click)="closeMenu()">
-    <div class="logo-icon">🌿</div><div class="brand-text">
+    <div class="logo-icon" aria-hidden="true">🌿</div><div class="brand-text">
       <span class="brand-name">Eco<span class="accent">Placa</span></span>
       <span class="brand-tagline">Trazabilidad RAEE</span>
     </div>
   </a>
-  <button class="mobile-toggle" (click)="toggleMenu()" aria-label="Abrir menú" [attr.aria-expanded]="isMenuOpen()">
-    <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+  <button #menuToggle type="button" class="mobile-toggle" [class.open]="isMenuOpen()" (click)="toggleMenu()"
+    [attr.aria-label]="isMenuOpen() ? 'Cerrar menú' : 'Abrir menú'" aria-controls="primary-navigation" [attr.aria-expanded]="isMenuOpen()">
+    <span class="bar" aria-hidden="true"></span><span class="bar" aria-hidden="true"></span><span class="bar" aria-hidden="true"></span>
   </button>
-  <nav class="nav-links" [class.open]="isMenuOpen()">
-    <a routerLink="/catalogo" routerLinkActive="active" (click)="closeMenu()">Catálogo</a>
-    <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMenu()">Dashboard</a>
+  <nav id="primary-navigation" aria-label="Navegación principal" class="nav-links" [class.open]="isMenuOpen()">
+    <a routerLink="/catalogo" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Catálogo</a>
+    <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Dashboard</a>
     @if (auth.hasRole(['DONOR', 'ADMIN'])) {
-      <a routerLink="/nuevo-dispositivo" routerLinkActive="active" (click)="closeMenu()">Publicar hardware</a>
+      <a routerLink="/nuevo-dispositivo" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Publicar hardware</a>
     }
     @if (auth.hasRole(['ADMIN', 'TECHNICIAN'])) {
-      <a routerLink="/transferencias" routerLinkActive="active" (click)="closeMenu()">Mis transferencias</a>
-      <a routerLink="/comentarios" routerLinkActive="active" (click)="closeMenu()">Comentarios y notas</a>
+      <a routerLink="/transferencias" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Mis transferencias</a>
+      <a routerLink="/comentarios" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Comentarios y notas</a>
     }
     @if (auth.isAuthenticated()) {
-      <div class="user-badge"><span class="status-indicator"></span>
+      <div class="user-badge" [title]="auth.currentUser()?.nombreCompleto + ' · ' + auth.currentUser()?.rol"><span class="status-indicator" aria-hidden="true"></span>
         <span class="user-role">{{ auth.currentUser()?.nombreCompleto }} · {{ auth.currentUser()?.rol }}</span>
       </div>
       <button type="button" (click)="logout()">Cerrar sesión</button>
     } @else {
-      <a routerLink="/login" routerLinkActive="active" (click)="closeMenu()">Iniciar sesión</a>
-      <a routerLink="/register" routerLinkActive="active" (click)="closeMenu()">Registro</a>
+      <a routerLink="/login" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Iniciar sesión</a>
+      <a class="register-link" routerLink="/register" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeMenu()">Registro</a>
     }
   </nav>
 </div></header>

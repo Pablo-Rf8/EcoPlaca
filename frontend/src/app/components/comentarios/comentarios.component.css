@@ -1,23 +1,31 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .comentarios-section {
   padding: 1.5rem 0;
   max-width: 900px;
   margin: 0 auto;
+  overflow-wrap: anywhere;
 }
 
 .comentarios-header {
   margin-bottom: 2rem;
 }
 
-.comentarios-header h2 {
-  font-size: 1.75rem;
+.comentarios-header h1 {
+  font-size: clamp(1.45rem, 3vw, 1.75rem);
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 0.35rem 0;
+  line-height: 1.3;
 }
 
 .comentarios-header p {
-  color: #64748b;
+  color: #475569;
   margin: 0;
+  line-height: 1.6;
 }
 
 .nuevo-comentario-card {
@@ -29,7 +37,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
-.nuevo-comentario-card h3 {
+.nuevo-comentario-card h2 {
   font-size: 1.1rem;
   margin: 0 0 1rem 0;
   color: #0f172a;
@@ -45,6 +53,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .campo-grupo label {
@@ -55,26 +64,39 @@
 
 .campo-grupo input,
 .campo-grupo textarea {
-  border: 1px solid #cbd5e1;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #94a3b8;
   border-radius: 6px;
   padding: 0.6rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #0f172a;
+  background: #fff;
   font-family: inherit;
-  outline: none;
   transition: border-color 0.2s;
 }
 
-.campo-grupo input:focus,
-.campo-grupo textarea:focus {
-  border-color: #10b981;
+.campo-grupo input:focus-visible,
+.campo-grupo textarea:focus-visible,
+.btn-publicar:focus-visible {
+  outline: 3px solid #047857;
+  outline-offset: 3px;
+}
+
+.campo-grupo textarea {
+  min-height: 8rem;
+  resize: vertical;
 }
 
 .btn-publicar {
   align-self: flex-start;
-  background-color: #10b981;
+  background-color: #047857;
   color: #ffffff;
   border: none;
   padding: 0.6rem 1.25rem;
+  min-height: 44px;
+  font-size: 0.9375rem;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
@@ -82,7 +104,7 @@
 }
 
 .btn-publicar:hover {
-  background-color: #059669;
+  background-color: #065f46;
 }
 
 .lista-comentarios {
@@ -97,10 +119,13 @@
   border-radius: 10px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-width: 0;
 }
 
 .comentario-top {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.6rem;
@@ -108,6 +133,9 @@
 
 .autor-info {
   display: flex;
+  flex: 1 1 250px;
+  flex-wrap: wrap;
+  min-width: 0;
   gap: 0.5rem;
   align-items: center;
 }
@@ -126,12 +154,13 @@
   border-radius: 4px;
 }
 
-.dispositivo-tag span {
+.dispositivo-tag {
+  max-width: 100%;
   font-family: monospace;
   font-size: 0.8rem;
   font-weight: 700;
   background-color: #ecfdf5;
-  color: #059669;
+  color: #065f46;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
 }
@@ -141,9 +170,33 @@
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 0 0 0.5rem 0;
+  white-space: pre-wrap;
 }
 
 .comentario-fecha {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #64748b;
+}
+
+.aviso-demostracion {
+  color: #334155;
+  background: #f0f7fa;
+  border: 1px solid #dce7ec;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.campo-grupo [aria-invalid="true"] { border-color: #b42318; }
+.campo-ayuda, .campo-error { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: #475569; }
+.campo-error { color: #b42318; }
+.formulario-estado:empty { display: none; }
+.formulario-estado p { color: #065f46; background: #ecfdf5; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; line-height: 1.5; margin: 0; }
+
+@media (max-width: 480px) {
+  .comentarios-section { padding: 0.5rem 0; }
+  .nuevo-comentario-card, .comentario-item { padding: 1rem; }
+  .btn-publicar { align-self: stretch; width: 100%; }
 }

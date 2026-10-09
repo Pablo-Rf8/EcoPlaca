@@ -1,20 +1,30 @@
-<section class="auth-card">
-  <h1>Iniciar sesión</h1>
-  @if (registered) { <p role="status">Registro completado. Inicia sesión con tu cuenta.</p> }
+<section class="auth-card" aria-labelledby="login-title">
+  <p class="eyebrow">Tu espacio EcoPlaca</p>
+  <h1 id="login-title">Iniciar sesión</h1>
+  <p class="intro">Accede para dar una nueva vida al hardware.</p>
+  @if (registered) { <p class="success" role="status">Registro completado. Inicia sesión con tu cuenta.</p> }
   @if (error()) { <p class="alert" role="alert">{{ error() }}</p> }
   <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="loading()">
     <label for="login-email">Correo electrónico</label>
-    <input id="login-email" type="email" formControlName="email" autocomplete="username" aria-describedby="login-email-error">
+    <input id="login-email" type="email" formControlName="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="150"
+      [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+      [attr.aria-describedby]="form.controls.email.touched && form.controls.email.invalid ? 'login-email-error' : null">
     @if (form.controls.email.touched && form.controls.email.invalid) {
       <small class="error" id="login-email-error">Ingresa un correo válido de hasta 150 caracteres.</small>
     }
     <label for="login-password">Contraseña</label>
-    <input id="login-password" type="password" formControlName="password" autocomplete="current-password" aria-describedby="login-password-error">
+    <div class="password-field">
+      <input id="login-password" [type]="passwordVisible() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" required minlength="8" maxlength="72"
+        [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+        [attr.aria-describedby]="form.controls.password.touched && form.controls.password.invalid ? 'login-password-error' : null">
+      <button type="button" class="password-toggle" (click)="passwordVisible.set(!passwordVisible())"
+        [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}</button>
+    </div>
     @if (form.controls.password.touched && form.controls.password.invalid) {
       <small class="error" id="login-password-error">La contraseña debe tener entre 8 y 72 caracteres.</small>
     }
-    <button type="submit" [disabled]="loading()">{{ loading() ? 'Iniciando sesión…' : 'Iniciar sesión' }}</button>
+    <button class="submit-button" type="submit" [disabled]="loading()">{{ loading() ? 'Iniciando sesión…' : 'Iniciar sesión' }}</button>
     @if (loading()) { <p role="status">Validando credenciales…</p> }
   </form>
-  <p>¿No tienes cuenta? <a routerLink="/register">Regístrate</a></p>
+  <p class="auth-footer">¿No tienes cuenta? <a routerLink="/register">Regístrate</a></p>
 </section>

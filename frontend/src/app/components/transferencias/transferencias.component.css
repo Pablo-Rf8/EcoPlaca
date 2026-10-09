@@ -1,1 +1,41 @@
-:host{display:block;color:#1B4965}.panel{max-width:1100px;margin:auto;padding:2rem 1rem}header{display:flex;align-items:center;justify-content:space-between;gap:1rem}h1{margin:0}h2{font-size:1.2rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:1rem;margin-top:1.5rem}article{border:1px solid #dce7ec;border-top:4px solid #2EC4B6;background:white;padding:1.5rem;border-radius:12px;overflow-wrap:anywhere}.estado{display:flex;justify-content:space-between;gap:.5rem;font-size:.85rem}.estado span{background:#fff0c2;padding:.3rem;border-radius:6px}dl{display:grid;grid-template-columns:1fr 2fr;gap:.6rem}dt{font-weight:600}dd{margin:0}button{background:#1B4965;color:white;border:0;border-bottom:3px solid #2EC4B6;border-radius:6px;padding:.8rem 1rem;font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:wait}button:focus-visible{outline:2px solid #2EC4B6;outline-offset:3px}.aviso{background:#d2f4ef;padding:1rem;border-radius:8px}.error{color:#b42318;background:#fff1f0;padding:1rem;border-radius:8px}.vacio{padding:2rem;background:#f0f7fa;border-radius:8px}dialog{width:min(500px,calc(100vw - 5rem));border:0;border-radius:14px;padding:1.5rem;color:#1B4965}dialog::backdrop{background:#1b496599}.acciones{display:flex;gap:.75rem;justify-content:flex-end}.secundario{background:#eaf1f5;color:#1B4965}@media(max-width:640px){header{flex-direction:column;align-items:flex-start}.acciones{flex-direction:column}}
+:host { display: block; min-width: 0; color: #1b4965; }
+.panel { max-width: 1100px; margin: auto; padding: 2rem 1rem; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+header > div { min-width: 0; }
+header > button { flex-shrink: 0; }
+h1 { margin: 0; font-size: clamp(1.65rem, 4vw, 2rem); }
+h2 { font-size: 1.2rem; line-height: 1.4; }
+p { line-height: 1.6; }
+header p { color: #526775; margin-bottom: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1rem; margin-top: 1.5rem; }
+article { display: flex; flex-direction: column; min-width: 0; border: 1px solid #dce7ec; border-top: 4px solid #2ec4b6; background: white; padding: 1.5rem; border-radius: 12px; overflow-wrap: anywhere; }
+article h2 { margin-bottom: .4rem; }
+.trazabilidad { color: #526775; font-size: .85rem; margin-top: 0; }
+.estado { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: .5rem; font-size: .85rem; }
+.estado span { background: #fff0c2; padding: .35rem .6rem; border-radius: 6px; white-space: nowrap; }
+dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: .6rem; line-height: 1.5; }
+dt { font-weight: 600; }
+dd { margin: 0; min-width: 0; }
+button { min-height: 44px; background: #1b4965; color: white; border: 0; border-bottom: 3px solid #2ec4b6; border-radius: 6px; padding: .8rem 1rem; font: inherit; cursor: pointer; }
+article > button { margin-top: auto; }
+button:hover:not(:disabled) { background: #12364b; }
+button:disabled { opacity: .55; cursor: wait; }
+button:focus-visible { outline: 2px solid #1b4965; outline-offset: 3px; }
+.aviso { background: #d2f4ef; padding: 1rem; border-radius: 8px; overflow-wrap: anywhere; }
+.error { color: #b42318; background: #fff1f0; padding: 1rem; border-radius: 8px; overflow-wrap: anywhere; }
+.vacio { padding: 2rem; background: #f0f7fa; border-radius: 8px; }
+dialog { width: min(500px, calc(100% - 2rem)); max-width: none; max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem); overflow-y: auto; border: 1px solid #dce7ec; border-radius: 14px; padding: 1.5rem; color: #1b4965; overflow-wrap: anywhere; }
+dialog h2 { margin-top: 0; }
+dialog::backdrop { background: #1b496599; }
+.acciones { display: flex; gap: .75rem; justify-content: flex-end; }
+.acciones > button { min-width: 0; }
+.secundario { background: #eaf1f5; color: #1b4965; border-bottom-color: #c3dce6; }
+.secundario:hover:not(:disabled) { background: #dce7ec; }
+@media (max-width: 640px) {
+  .panel { padding: 1rem 0; }
+  header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .acciones { flex-direction: column; }
+  article { padding: 1rem; }
+  dialog { padding: 1.25rem; }
+}
+@media (max-width: 400px) { header > button { width: 100%; } }
