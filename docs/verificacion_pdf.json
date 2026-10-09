@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-09",
+  "documents": [
+    {
+      "file": "Manual_de_Usuario_EcoPlaca.pdf",
+      "pages": 12,
+      "bytes": 248287,
+      "layout": "sin desbordamientos"
+    },
+    {
+      "file": "Documentacion_del_Proyecto_EcoPlaca.pdf",
+      "pages": 16,
+      "bytes": 328501,
+      "layout": "sin desbordamientos"
+    }
+  ]
+}
